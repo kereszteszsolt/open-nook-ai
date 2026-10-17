@@ -1,0 +1,132 @@
+// SPDX-FileCopyrightText: 2026 Keresztes Zsolt <https://kereszteszsolt.hu>
+// SPDX-License-Identifier: Apache-2.0
+
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { useAISDKRuntime } from "@assistant-ui/ai-sdk";
+import { AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive, useAuiState } from "@assistant-ui/react";
+import { DefaultChatTransport } from "ai";
+import { z } from "zod";
+import { CopyButton } from "../rendering/copy-button";
+import { RichText } from "../rendering/rich-text";
+import { chatPayload } from "./transport";
+
+const registry = z.object({
+  enabled: z.boolean(), status: z.enum(["ready", "missing_api_key", "missing_models", "invalid_configuration"]),
+  models: z.array(z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(200) })).max(5),
+});
+type Registry = z.infer<typeof registry>;
+
+function Message() {
+  const message = useAuiState((state) => state.message);
+  const text = message.content.filter((part) => part.type === "text").map((part) => part.text).join("\n");
+  const assistant = message.role === "assistant";
+  const streaming = message.status?.type === "running";
+  const incomplete = message.status?.type === "incomplete";
+  return <MessagePrimitive.Root className={`message ${assistant ? "assistant-message" : "user-message"}`}>
+    <div className="message-author">{assistant ? "OpenNook" : "You"}</div>
+    {assistant ? <RichText text={text} streaming={streaming} /> : <p className="plain-text">{text}</p>}
+    {streaming && <p className="message-state" role="status">Writing…</p>}
+    {incomplete && <p className="message-state">Response stopped or incomplete.</p>}
+    {!!text && <div className="message-actions"><CopyButton text={text} label="Copy message" /></div>}
+  </MessagePrimitive.Root>;
+}
+
+function Session({ models, model, selectModel, reloadModels }: {
+  models: Registry; model: string; selectModel: (model: string) => void; reloadModels: () => void;
+}) {
+  const [limitError, setLimitError] = useState(false);
+  const transport = useMemo(() => new DefaultChatTransport({
+    api: "/api/chat",
+    prepareSendMessagesRequest: ({ messages, trigger, id, messageId }) => {
+      try {
+        const body = chatPayload(model, messages, trigger, id, messageId);
+        setLimitError(false);
+        return { body };
+      } catch (error) { setLimitError(true); throw error; }
+    },
+  }), [model]);
+  const chat = useChat({ transport });
+  const runtime = useAISDKRuntime(chat);
+  const busy = chat.status === "submitted" || chat.status === "streaming";
+  const enabled = models.enabled && !!model;
+  const hasPrompt = chat.messages.some((message) => message.role === "user");
+  const { stop } = chat;
+  useEffect(() => () => { void stop(); }, [stop]);
+  return <AssistantRuntimeProvider runtime={runtime}>
+    <header className="chat-header">
+      <div className="wordmark"><span aria-hidden="true">◈</span> OpenNook AI <span className="local-badge">Local</span></div>
+      <button className="quiet-button" type="button" disabled={busy || !chat.messages.length} onClick={() => { chat.setMessages([]); chat.clearError(); runtime.thread.composer.setText(""); setLimitError(false); }}>New chat</button>
+    </header>
+    <div className="model-bar">
+      <label htmlFor="chat-model">Model</label>
+      <select id="chat-model" value={model} disabled={!enabled || busy} onChange={(event) => selectModel(event.target.value)}>
+        {!model && <option value="">No models configured</option>}
+        {models.models.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+      <span className="session-note">This chat stays in this tab until reload.</span>
+    </div>
+    {!enabled && <div className="setup-message" role="status">
+      <h2>Connect a model to begin</h2>
+      <p>{models.status === "invalid_configuration" ? "Check the model and request limits in your server settings." : "Add an OpenRouter API key and at least one model in your server settings."}</p>
+      <button type="button" className="quiet-button" onClick={reloadModels}>Check configuration again</button>
+    </div>}
+    <ThreadPrimitive.Root className="thread">
+      <ThreadPrimitive.Viewport className="thread-viewport" aria-busy={busy}>
+        {!chat.messages.length && <section className="welcome" aria-labelledby="welcome-title">
+          <p className="eyebrow">Your own little corner for AI</p>
+          <h1 id="welcome-title">A space to think.<br />A conversation away.</h1>
+          <p>Ask a question, explore an idea, or work through a problem.</p>
+        </section>}
+        <div className="messages" aria-label="Conversation">
+          <ThreadPrimitive.Messages>{() => <Message />}</ThreadPrimitive.Messages>
+        </div>
+        {chat.status === "submitted" && <p className="run-status" role="status">Waiting for the model…</p>}
+      </ThreadPrimitive.Viewport>
+      <div className="composer-area">
+        {chat.error && <div className="chat-error" role="alert">
+          <p>{limitError ? "This conversation exceeds the request limits. Shorten your prompt or start a new chat." : "The model request failed. Your messages are still here. Check your connection and model settings, then try Regenerate."}</p>
+          <button type="button" className="quiet-button" onClick={() => chat.clearError()}>Dismiss error</button>
+        </div>}
+        <div className="thread-actions">
+          <ThreadPrimitive.ScrollToBottom className="quiet-button">Latest message ↓</ThreadPrimitive.ScrollToBottom>
+          <button type="button" className="quiet-button" disabled={!enabled || busy || !hasPrompt} onClick={() => { chat.clearError(); void chat.regenerate(); }}>Regenerate</button>
+        </div>
+        <ComposerPrimitive.Root className="composer">
+          <label htmlFor="chat-prompt" className="sr-only">Message</label>
+          <ComposerPrimitive.Input id="chat-prompt" placeholder="Ask a question…" rows={2} maxLength={8000} addAttachmentOnPaste={false} disabled={!enabled || busy} aria-describedby="composer-help" />
+          <div className="composer-controls">
+            <span id="composer-help">Enter to send · Shift+Enter for a new line</span>
+            {busy ? <ComposerPrimitive.Cancel className="primary-button">Stop</ComposerPrimitive.Cancel>
+              : <ComposerPrimitive.Send className="primary-button" disabled={!enabled}>Send ↑</ComposerPrimitive.Send>}
+          </div>
+        </ComposerPrimitive.Root>
+        <p className="privacy-note">Chats reset on reload. Messages you send go to your selected OpenRouter model. AI can make mistakes.</p>
+      </div>
+    </ThreadPrimitive.Root>
+  </AssistantRuntimeProvider>;
+}
+
+export function Chat() {
+  const [models, setModels] = useState<Registry>();
+  const [failed, setFailed] = useState(false);
+  const [model, setModel] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/models", { signal: controller.signal, cache: "no-store" }).then(async (response) => {
+      if (!response.ok && response.status !== 503) throw new Error("Model registry unavailable");
+      return registry.parse(await response.json());
+    }).then((result) => {
+      if (controller.signal.aborted) return;
+      setModels(result); setFailed(false);
+      setModel((current) => result.models.some((item) => item.id === current) ? current : result.models[0]?.id ?? "");
+    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    return () => controller.abort();
+  }, [refresh]);
+  if (failed) return <main className="connection-state"><h1>Models could not be loaded</h1><p>Check that OpenNook is running, then try again.</p><button type="button" className="primary-button" onClick={() => { setFailed(false); setRefresh((value) => value + 1); }}>Try again</button></main>;
+  if (!models) return <main className="connection-state"><p role="status">Loading your models…</p></main>;
+  return <main className="chat-shell"><Session key={models.models.map((item) => item.id).join(",")} models={models} model={model} selectModel={setModel} reloadModels={() => setRefresh((value) => value + 1)} /></main>;
+}

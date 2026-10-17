@@ -1,6 +1,6 @@
 # HTTP contracts — local API and target MVP
 
-Next.js App Router serves same-origin Route Handlers. ONK-001 implements health; ONK-002 implements the model registry and streaming chat API. Conversation routes remain planned for ONK-004. The browser is still a placeholder until ONK-003.
+Next.js App Router serves same-origin Route Handlers. ONK-001 implements health; ONK-002 implements the model registry and streaming chat API. Conversation routes remain planned for ONK-004. ONK-003 connects the browser through the compatible assistant-ui runtime; conversation history remains in memory until ONK-004.
 
 | Endpoint | Purpose | Story / state |
 | --- | --- | --- |

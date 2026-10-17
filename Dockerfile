@@ -16,6 +16,8 @@ RUN npm run build
 
 FROM dependencies AS production-dependencies
 RUN npm prune --omit=dev --no-audit --no-fund
+# Next.js's optional Playwright peer can survive pruning after browser tests are installed.
+RUN rm -rf node_modules/@playwright/test node_modules/playwright node_modules/playwright-core
 
 FROM base AS runner
 ENV NODE_ENV=production \

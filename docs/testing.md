@@ -1,6 +1,6 @@
 # Verification approach — foundation and planned MVP
 
-ONK-001/002 include Vitest checks for database configuration, health, model allowlisting and the real AI SDK/OpenRouter adapter with mocked fetch; `npm run test`, `npm run lint`, `npm run typecheck` and `npm run build` provide local foundation checks. See [Local development](development.md) and the release [verification](releases/release-0.1-mvp/verification.md) for actual commands and outcomes. There is no CI workflow yet. The table below describes evidence for the full MVP as later approved stories are implemented.
+ONK-001–003 include Vitest checks for database configuration, health, model allowlisting, the real AI SDK/OpenRouter adapter with mocked fetch, client context and safe content rendering; `npm run test`, `npm run lint`, `npm run typecheck` and `npm run build` provide local foundation checks. See [Local development](development.md) and the release [verification](releases/release-0.1-mvp/verification.md) for actual commands and outcomes. There is no CI workflow yet. The table below describes evidence for the full MVP as later approved stories are implemented.
 
 | Layer | Planned verification |
 | --- | --- |
@@ -24,3 +24,16 @@ Live OpenRouter smoke testing is an **explicitly approved** exception: use non-s
 ## Story closeout
 
 The final story checks README/roadmap accuracy, link integrity, dependency versions, license-header policy, security caveats, Docker restarts, representative real-model behavior (only when approved) and screenshots only if actual image assets have been captured.
+
+## ONK-003 browser checks
+
+Run the production app locally, then:
+
+```bash
+npx playwright install chromium
+E2E_BASE_URL=http://127.0.0.1:3000 npm run test:browser
+```
+
+The config defaults to isolated port `33030` if `E2E_BASE_URL` is omitted. Start the app yourself; the tests do not start/reconfigure services. The suite intercepts model/chat endpoints before navigation, uses deterministic UI-message SSE, and denies other external browser requests. It does not require a provider key. Six scenarios run in desktop/light and mobile/dark Chromium: model choice and keyboard Send, actual rich graphics/code/math and exact clipboard copying, explicit Regenerate/New chat, safe request failure and recovery, hostile content, disabled setup, Stop with retained partial output, and registry recovery. Some scenarios cover multiple related controls.
+
+Vitest uses jsdom only for renderer/component tests. Other API/configuration tests keep the node environment. Run focused checks with `npm run test -- tests/render-policy.test.ts tests/renderers.test.tsx tests/chat-transport.test.ts`; `npm run test` also includes the earlier story regressions. Browser captures/traces remain under ignored `test-results/`.

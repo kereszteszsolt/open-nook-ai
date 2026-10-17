@@ -17,7 +17,7 @@ Model selection is intentionally **explicit, bounded and server-controlled**. Th
 ## Selection rules
 
 1. Trim whitespace, ignore blank slots and deduplicate IDs.
-2. `GET /api/models` exposes only the resulting five-or-fewer configured IDs, with the same IDs as labels. The UI selector follows in ONK-003.
+2. `GET /api/models` exposes only the resulting five-or-fewer configured IDs, with the same IDs as labels. The ONK-003 selector offers exactly this list and is disabled while a response is running.
 3. The server rejects requests for unknown model IDs even if the browser has been manipulated.
 4. If the API key or model choices are missing, explain setup rather than sending an accidental request.
 5. Do not silently route to another provider or model after an error. Real requests may incur OpenRouter charges.
@@ -26,7 +26,7 @@ IDs must be qualified `provider/model` values, at most 200 characters, using let
 
 The integration pins `ai@7.0.143` and `@openrouter/ai-sdk-provider@3.1.0`. It uses the fixed HTTPS chat-completions endpoint, denies redirects, sets `maxRetries: 0` / `streamRetries: 0` and sends `provider.allow_fallbacks: false` with `require_parameters: true`. No alternate model list is sent. Provider-side routing for the selected model remains OpenRouter's responsibility; unsupported required parameters cause an error.
 
-**Do not assume that an example ID, price, context window or feature support is permanent**; verify actual provider model identifiers before configuring them. Explicit `POST /api/chat` requests may incur charges. Loading the placeholder or listing models does not contact OpenRouter. Request/context/output limits and the SSE contract are documented in [HTTP contracts](api-contract.md).
+**Do not assume that an example ID, price, context window or feature support is permanent**; verify actual provider model identifiers before configuring them. Explicit `POST /api/chat` requests may incur charges. Loading the chat or listing models does not contact OpenRouter. Request/context/output limits and the SSE contract are documented in [HTTP contracts](api-contract.md).
 
 ## Deployment paths
 

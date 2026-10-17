@@ -1,6 +1,6 @@
-# Local development — ONK-001/002
+# Local development — ONK-001–003
 
-The app provides a responsive placeholder, database readiness, `GET /api/models` and a server-only `POST /api/chat` stream. The chat UI and conversation storage remain planned. Provider checks use mocks; live OpenRouter connectivity has not been tested.
+The app provides a responsive assistant-ui chat with safe rich previews, database readiness, `GET /api/models` and a server-only `POST /api/chat` stream. Chat state is in memory and resets on reload; conversation storage remains ONK-004. Provider checks use mocks; live OpenRouter connectivity has not been tested.
 
 ## Tested foundation versions
 
@@ -14,8 +14,13 @@ The app provides a responsive placeholder, database readiness, `GET /api/models`
 | PostgreSQL Docker image | 18.6-bookworm |
 | Zod / Vitest | 4.6.7 / 5.0.5 |
 | AI SDK / OpenRouter adapter | 7.0.143 / 3.1.0 |
+| assistant-ui React / AI SDK adapter / AI SDK React | 0.15.29 / 0.0.13 / 4.0.147 |
+| React Markdown / KaTeX / Mermaid | 10.1.0 / 0.19.0 / 12.2.0 |
+| Vega / Vega-Lite / interpreter | 6.4.0 / 6.5.0 / 2.3.2 |
+| DOMPurify / Prism | 3.4.17 / 1.30.0 |
+| Playwright / jsdom | 1.62.1 / 30.1.3 |
 
-The lockfile pins transitive dependencies. Install with `npm ci`. The assistant-ui runtime is deferred to ONK-003; the text-only AI SDK 7 UI-message API contract is documented in [HTTP contracts](api-contract.md).
+The lockfile pins transitive dependencies. Install with `npm ci`. The text-only AI SDK 7 UI-message API contract is documented in [HTTP contracts](api-contract.md); supported renderer syntax and limits are in [Rich rendering](rendering.md).
 
 Node's exact version is enforced by `.npmrc`. npm install-script approvals in `package.json` are pinned to the installed Prisma/engine and native resolver versions; no blanket script approval is enabled. ESLint 9.39.5 matches the current Next.js React/accessibility plugin peer ranges, although npm marks that ESLint major as deprecated.
 
@@ -75,6 +80,6 @@ npm start
 
 Tests mock the database for health success/error cases, validate environment settings and exercise the actual AI SDK/OpenRouter adapter with explicitly mocked fetch. Test setup clears all provider environment slots and blocks unmocked global fetch; no secret or live provider call is needed. They do not prove a live database connection; see the release [verification](releases/release-0.1-mvp/verification.md) for actual Compose outcomes. Building, generating Prisma Client and type checking do not require a live database or an OpenRouter key. Runtime startup requires a complete PostgreSQL connection URL.
 
-Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database/provider settings only at runtime. Provider retries and fallbacks are disabled; timeout, cancellation and bounded text streaming are tested. The rich-rendering story has separate approval and test boundaries.
+Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database/provider settings only at runtime. Provider retries and fallbacks are disabled; timeout, cancellation and bounded text streaming are tested. Renderer tests cover normal and hostile content; the Playwright suite intercepts every chat request and blocks external browser loads.
 
 Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [Prisma Client v7](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/introduction), [Prisma generation without models](https://www.prisma.io/docs/cli/v7/generate), [PostgreSQL container persistence](https://docs.docker.com/guides/postgresql/immediate-setup-and-data-persistence/).

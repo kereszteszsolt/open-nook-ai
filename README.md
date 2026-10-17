@@ -9,7 +9,7 @@
 
 **OpenNook AI** is a planned **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. Later phases may add **read-only MCP tools** and **custom, explicitly activated skills**.
 
-> **Repository status: ONK-001 foundation and ONK-002 streaming API.** Release 0.1 is **in development**. A Next.js placeholder, database readiness, local Compose stack, safe model registry and server-only OpenRouter streaming API are included. Provider behavior is verified with mocks; live connectivity is not tested. The chat UI, rich rendering and conversation history remain planned. The diagrams describe the target MVP; actual checks are recorded in [release verification](docs/releases/release-0.1-mvp/verification.md).
+> **Repository status: ONK-001–003 implemented.** Release 0.1 is **in development**. The local Compose stack includes database readiness, a safe model registry, server-only OpenRouter streaming and an assistant-ui chat with bounded Markdown/code/math/diagram/chart rendering. Provider behavior is verified with mocks; live connectivity is not tested. Conversations stay in memory and reset on reload; persistent history and CI remain ONK-004. The diagrams describe the target MVP; actual checks are recorded in [release verification](docs/releases/release-0.1-mvp/verification.md).
 
 ## Planned Release 0.1 — AI Chat MVP
 
@@ -75,7 +75,7 @@ More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · 
 | Area | Technology |
 | --- | --- |
 | Web and server | Next.js (App Router), React, TypeScript |
-| Chat UI | assistant-ui, Tailwind CSS; optional shadcn/ui-style primitives |
+| Chat UI | assistant-ui primitives and focused responsive CSS |
 | LLM integration | Vercel AI SDK (Core/UI), OpenRouter |
 | Rich rendering | Markdown + GFM, syntax highlighting, KaTeX, Mermaid, Vega-Lite |
 | Storage | PostgreSQL, Prisma; JSONB only where flexible metadata is useful |
@@ -84,7 +84,7 @@ More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · 
 | Deployment | Docker Compose (`web`, `db`) |
 | Delivery | GitHub Actions CI |
 
-The foundation pins Node.js 24.20.0, Next.js 16.4.2, React 19.3.1, TypeScript 5.9.3 and Prisma 7.10.1. ONK-002 pins AI SDK 7.0.143 and the OpenRouter adapter 3.1.0. The assistant-ui runtime will be added in ONK-003. See [Local development](docs/development.md) for the exact foundation stack and commands.
+The foundation pins Node.js 24.20.0, Next.js 16.4.2, React 19.3.1, TypeScript 5.9.3 and Prisma 7.10.1. ONK-002 pins AI SDK 7.0.143 and the OpenRouter adapter 3.1.0. ONK-003 adds assistant-ui React 0.15.29, AI SDK adapter 0.0.13 and AI SDK React 4.0.147. Renderer/test versions are pinned in the lockfile. See [Local development](docs/development.md) for the exact foundation stack and commands.
 
 ## Model configuration
 
@@ -103,7 +103,7 @@ Only non-empty, unique, configured IDs are offered. If the key or all slots are 
 
 ## Local setup — foundation and streaming API
 
-To run the current placeholder, database readiness and model/chat API locally:
+To run the current local chat and model/database APIs:
 
 ```bash
 cp .env.example .env
@@ -111,7 +111,7 @@ cp .env.example .env
 docker compose up --build --wait
 ```
 
-Open `http://localhost:3000`; set `APP_PORT` if that port is occupied. `GET /api/health` reports readiness after a successful database query. OpenRouter settings may remain empty: the chat API is disabled without a key and configured model. Loading the placeholder and listing models make no provider calls. Explicit chat requests may incur charges; see the [API contract](docs/api-contract.md). See [Local development](docs/development.md) for native Next.js setup, migrations and checks.
+Open `http://localhost:3000`; set `APP_PORT` if that port is occupied. `GET /api/health` reports readiness after a successful database query. OpenRouter settings may remain empty: the chat API is disabled without a key and configured model. Loading the chat and listing models make no provider calls. Explicit chat requests may incur charges; see the [API contract](docs/api-contract.md). See [Local development](docs/development.md) for native Next.js setup, migrations and checks.
 
 For a public deployment, **do not reuse this unauthenticated demo configuration**. Add authentication, per-user data isolation, limits and cost protection first.
 
@@ -127,7 +127,8 @@ Only **Release 0.1** has committed story acceptance criteria. Future MCP and Ski
 | [Local development](docs/development.md) | Current foundation versions, Compose and native setup |
 | [API contract](docs/api-contract.md) | Implemented models/chat streaming and planned conversation routes |
 | [Model configuration](docs/model-configuration.md) | Allowlisted OpenRouter models and secrets |
-| [Testing](docs/testing.md) | Test strategy without billable CI calls |
+| [Testing](docs/testing.md) | Unit/renderer/browser checks without billable provider calls |
+| [Rich rendering](docs/rendering.md) | Supported Markdown, math, Mermaid and Vega-Lite syntax and safety limits |
 | [MCP and Skills concept](docs/extensions.md) | Clearly **future**, no runtime code in MVP |
 | [Future ideas](docs/future.md) | Optional features without acceptance criteria |
 | [Codex roles and skills](.codex/README.md) | Lightweight technical agent guidance |
