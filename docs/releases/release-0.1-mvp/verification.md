@@ -249,3 +249,20 @@ docker run --rm --user "$(id -u):$(id -g)" --network host \
 - The app remains single-user, unauthenticated and localhost-only. One active request per conversation is not a global cost/rate limit. History is bounded to 32 stored messages, 8,000 UTF-16 units per context message and 24,000 context total; no silent history truncation or automatic paid retry occurs.
 
 - Final restoration: `docker compose --env-file /tmp/open-nook-onk004.env -p open-nook-ai-onk004 -f compose.yaml up -d --force-recreate --wait --wait-timeout 120` passed. Read-only Docker/HTTP assertions confirmed healthy non-root web/db, `127.0.0.1:33040`, no published DB port, the same persistent volume, an empty provider key, disabled chat, no fixture mount or `NODE_OPTIONS`, and all earlier ONK-001/002/003 containers healthy. Saved-history fingerprint still matched after restoration. `docker compose ... config --quiet` and `exec -T web ./node_modules/.bin/prisma migrate status` passed with both migrations current. The isolated local runtime remains available at **http://127.0.0.1:33040**; existing `.env` settings were not activated or changed.
+
+## Local runtime consolidation — 2026-10-17
+
+After commit `e662a82`, the user requested removal of duplicate OpenNook containers and a current-source redeployment. Four isolated story stacks (`open-nook-ai-onk001` through `open-nook-ai-onk004`) were running eight containers. The only saved history in those stacks was the previously recorded two-message restart fixture; its full fingerprint still matched before shutdown. All four old PostgreSQL volumes were preserved offline. The normal `open-nook-ai` project now uses its own persistent `open-nook-ai_postgres_data` volume and the user's existing `.env` settings. Only ignored `.env` `APP_PORT` changed, from occupied `3000` to `33040`; a masked SHA-256 comparison confirmed every other setting unchanged.
+
+| Actual operation | Observed result |
+| --- | --- |
+| `docker compose -p open-nook-ai -f compose.yaml build web` | Passed from current source; Prisma generation, production compilation and integrated TypeScript passed |
+| `docker compose -p open-nook-ai -f compose.yaml up -d --wait --wait-timeout 120 db` | Normal PostgreSQL initialized on its own new persistent volume and became healthy |
+| `docker compose -p <old-project> -f compose.yaml down --remove-orphans` for the four exact story projects | Removed eight old containers and four old networks; no volumes or images deleted |
+| `docker compose -p open-nook-ai -f compose.yaml up -d --force-recreate --wait --wait-timeout 120 web` | Current image started successfully; web/db healthy; both committed migrations applied |
+| `docker compose -p open-nook-ai -f compose.yaml exec -T web ./node_modules/.bin/prisma migrate status` | Both migrations current |
+| `node /checks/smoke.mjs` from `/tmp/open-nook-redeploy-check` in the Chromium tools container | Actual desktop/light and mobile/dark UI passed model-list matching, create/open/reload/delete of owned empty conversation fixtures and overflow checks; zero page errors, external requests or chat requests |
+| Network-disabled production-image audit | Passed; no environment files, baked secrets or test tooling; 103 client JavaScript files contained no private settings or provider endpoint |
+| Read-only Docker/HTTP/environment audit | Exactly two OpenNook containers, correct freshly built image, non-root web, no test mount/preload, localhost-only web `33040`, private DB, readiness connected and three configured models. All four old volumes retained identity; all 30 unrelated containers retained their IDs and running/stopped states |
+
+The current local app is **http://127.0.0.1:33040**. Its normal runtime uses the configured server-side OpenRouter key; this deployment verification made **zero model requests**. Live provider connectivity/compatibility and billing behavior remain **Not run**. Temporary browser captures and audit helpers are under `/tmp/open-nook-redeploy-check`; the browser fixtures were deleted through the app after checks.
