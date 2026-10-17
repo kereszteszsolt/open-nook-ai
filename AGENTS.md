@@ -2,7 +2,7 @@
 
 ## Current repository status
 
-**OpenNook AI has the ONK-001/002 foundation and ONK-003 chat UI.** Release 0.1 (`ONK-001`–`ONK-004`) is in development: Next.js, database readiness, Prisma migration infrastructure and a local Compose stack exist. Consult the story status and release verification for actual evidence. ONK-002 adds a server-only OpenRouter integration with mocked verification. ONK-003 adds assistant-ui chat and bounded safe rich previews. ONK-004 remains `Planned`; there is no conversation persistence or functional CI yet. Live-provider connectivity has not been tested. Do not claim implemented behavior or verification before actually completing it.
+**OpenNook AI Release 0.1 (ONK-001–004) is implemented for local use.** The current source adds PostgreSQL conversation history and GitHub Actions checks. Consult story status and release verification for actual evidence. Live-provider connectivity and hosted CI execution have not been tested. Do not claim implemented behavior or verification before actually completing it.
 
 The agreed MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma conversation history and safe rich content rendering. Docker Compose will run `web` and `db`. Do not introduce an independent backend, Nx/Turborepo, MongoDB, MCP runtime, agents, user-created skills, or auth flows into Release 0.1.
 

@@ -22,7 +22,10 @@ const message = z.object({
 });
 const chatRequest = z.object({
   model: z.string().min(1).max(200),
-  messages: z.array(message).min(1).max(32),
+  messages: z.array(message).length(1),
+  conversationId: z.uuid(),
+  version: z.number().int().min(0).max(2_000_000_000),
+  requestId: z.uuid(),
   id: identifier.optional(),
   trigger: z.enum(["submit-message", "regenerate-message"]).optional(),
   messageId: identifier.optional(),
@@ -39,12 +42,12 @@ export class ChatRequestError extends Error {
   }
 }
 
-export async function readChatRequest(request: Request, signal: AbortSignal) {
+export async function readJsonRequest(request: Request, signal: AbortSignal, limit = MAX_REQUEST_BYTES): Promise<unknown> {
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     throw new ChatRequestError(415, "unsupported_content_type", "Send an application/json request.");
   }
   const declaredLength = request.headers.get("content-length");
-  if (declaredLength !== null && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_REQUEST_BYTES)) {
+  if (declaredLength !== null && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > limit)) {
     throw new ChatRequestError(413, "request_too_large", "The chat request is too large.");
   }
   signal.throwIfAborted();
@@ -61,7 +64,7 @@ export async function readChatRequest(request: Request, signal: AbortSignal) {
       signal.throwIfAborted();
       if (done) { complete = true; break; }
       bytes += value.byteLength;
-      if (bytes > MAX_REQUEST_BYTES) {
+      if (bytes > limit) {
         throw new ChatRequestError(413, "request_too_large", "The chat request is too large.");
       }
       chunks.push(value);
@@ -75,20 +78,22 @@ export async function readChatRequest(request: Request, signal: AbortSignal) {
     } catch {
       throw new ChatRequestError(400, "invalid_request", "Send a valid chat request.");
     }
-    const result = chatRequest.safeParse(input);
-    if (!result.success) {
-      throw new ChatRequestError(400, "invalid_request", "Send bounded text messages and a configured model.");
-    }
-    return {
-      model: result.data.model,
-      messages: result.data.messages.map((item) => ({
-        role: item.role,
-        content: item.parts.map((part) => part.text).join(""),
-      })),
-    };
+    return input;
   } finally {
     signal.removeEventListener("abort", onAbort);
     if (!complete) void reader.cancel().catch(() => {});
     reader.releaseLock();
   }
+}
+
+export async function readChatRequest(request: Request, signal: AbortSignal) {
+  const result = chatRequest.safeParse(await readJsonRequest(request, signal));
+  if (!result.success) throw new ChatRequestError(400, "invalid_request", "Send a bounded text prompt and a saved conversation version.");
+  const input = result.data;
+  const user = input.messages[0];
+  return {
+    model: input.model, conversationId: input.conversationId, version: input.version, requestId: input.requestId,
+    regenerate: input.trigger === "regenerate-message",
+    user: { id: user.id, content: user.parts.map((part) => part.text).join("") },
+  };
 }

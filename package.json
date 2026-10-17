@@ -21,7 +21,8 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
     "db:status": "prisma migrate status",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.147",

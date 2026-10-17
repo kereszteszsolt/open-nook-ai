@@ -6,3 +6,47 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum MessageRole {
+  user
+  assistant
+}
+
+enum MessageStatus {
+  pending
+  completed
+  stopped
+  failed
+}
+
+model Conversation {
+  id              String    @id @default(uuid()) @db.Uuid
+  title           String    @default("New chat") @db.VarChar(80)
+  version         Int       @default(0)
+  activeRequestId String?   @db.Uuid
+  leaseExpiresAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
+
+  @@index([updatedAt, id])
+}
+
+model Message {
+  id             String        @id @default(uuid()) @db.Uuid
+  conversationId String        @db.Uuid
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  clientId       String        @db.VarChar(128)
+  sequence       Int
+  role           MessageRole
+  content        String        @db.Text
+  status         MessageStatus
+  modelId        String?       @db.VarChar(200)
+  requestId      String?       @db.Uuid
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([conversationId, sequence])
+  @@unique([conversationId, clientId])
+}

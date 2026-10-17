@@ -1,10 +1,10 @@
 # Chat content rendering — ONK-003
 
-The chat uses assistant-ui primitives with `@ai-sdk/react` and the compatible `@assistant-ui/ai-sdk` runtime. A regular `DefaultChatTransport` sends text-only messages to the ONK-002 API; no cloud storage, frontend tools, attachments, MCP connection or automatic model request is configured. Messages live in this tab and reset on reload. Persisted conversations belong to ONK-004.
+The chat uses assistant-ui primitives with `@ai-sdk/react` and the compatible `@assistant-ui/ai-sdk` runtime. A regular `DefaultChatTransport` sends text-only messages to the ONK-002 API; no cloud storage, frontend tools, attachments, MCP connection or automatic model request is configured. ONK-004 stores conversation text and final statuses in PostgreSQL; loaded answers use the same safe renderers.
 
 ## Controls and request limits
 
-Choose one of the configured models, enter a message and use Send (Enter) or insert a line break (Shift+Enter). Stop aborts the active fetch. Regenerate explicitly replaces the most recent answer from the same user prompt. New chat clears the in-memory thread. Copy message preserves the original text; Copy code copies the fenced source. Clipboard failures leave the text selectable.
+Choose one of the configured models, enter a message and use Send (Enter) or insert a line break (Shift+Enter). Stop aborts the active fetch. Regenerate explicitly replaces the most recent answer from the same user prompt. New chat opens an empty thread while keeping earlier conversations in history. Copy message preserves the original text; Copy code copies the fenced source. Clipboard failures leave the text selectable.
 
 Model selection and a second Send are disabled during a request. Errors preserve existing messages and expose only generic guidance. The client validates the same message/context/body limits before sending; it never silently truncates conversation context or selects a fallback model. See [HTTP contracts](api-contract.md) for server-enforced limits.
 

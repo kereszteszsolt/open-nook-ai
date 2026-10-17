@@ -41,7 +41,7 @@ export function fixtureResponse(chunks: unknown[], signal?: AbortSignal | null, 
 }
 
 export function validChatBody() {
-  return { model: TEST_MODEL, messages: [{ id: "user-1", role: "user", parts: [{ type: "text", text: "Hello" }] }] };
+  return { model: TEST_MODEL, conversationId: "00000000-0000-4000-8000-000000000001", version: 0, requestId: "00000000-0000-4000-8000-000000000002", messages: [{ id: "user-1", role: "user", parts: [{ type: "text", text: "Hello" }] }] };
 }
 
 export function chatRequest(body: unknown = validChatBody(), options: RequestInit = {}) {

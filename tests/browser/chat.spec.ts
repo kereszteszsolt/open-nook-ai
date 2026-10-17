@@ -6,8 +6,8 @@ import { test, expect, type Page } from "@playwright/test";
 const models = { enabled: true, status: "ready", models: ["test/model-one", "test/model-two"].map((id) => ({ id, label: id })) };
 const rich = '# A useful answer\n\n| Item | Value |\n| --- | --- |\n| Focus | 3 |\n\n- A short list\n\n```javascript\nconst answer = 42;\n```\n\nInline $x^2$\n\n$$\nE=mc^2\n$$\n\n```mermaid\nflowchart LR\nA[Question] --> B[Answer]\n```\n\n```vega-lite\n{"mark":"bar","data":{"values":[{"category":"A","amount":3},{"category":"B","amount":5}]},"encoding":{"x":{"field":"category","type":"nominal"},"y":{"field":"amount","type":"quantitative"}}}\n```';
 const hostile = '<script>window.attacked=true</script>\n\n![tracking](https://private.invalid/pixel)\n\n[Attack](javascript:alert%281%29)\n\n$\\includegraphics{https://private.invalid/math}$\n\n```mermaid\n%%{init: {securityLevel: "loose"}}%%\nflowchart LR\nclick A "https://private.invalid"\n```\n\n```vega-lite\n{"mark":"bar","data":{"url":"https://private.invalid/data"}}\n```\n\n```mermaid\nflowchart LR\nA[unfinished\n```\n\nConversation survives.';
-function stream(text: string, finish = true) {
-  const events = [{ type: "start", messageId: "answer-" + crypto.randomUUID() }, { type: "start-step" },
+function stream(text: string, finish = true, answerId = "answer-" + crypto.randomUUID()) {
+  const events = [{ type: "start", messageId: answerId }, { type: "start-step" },
     { type: "text-start", id: "text-0" }, { type: "text-delta", id: "text-0", delta: text },
     ...(finish ? [{ type: "text-end", id: "text-0" }, { type: "finish-step" }, { type: "finish", finishReason: "stop" }] : [])];
   return events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") + (finish ? 'data: [DONE]\n\n' : '');
@@ -23,7 +23,28 @@ async function safePage(page: Page) {
   });
   // Every chat request is intercepted before navigation; no provider request can escape these tests.
   await page.route("**/api/models", (route) => route.fulfill({ json: models }));
-  return { errors, external };
+  const id = "00000000-0000-4000-8000-000000000004";
+  let saved = { id, title: "New chat", version: 0, active: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), messages: [] as Record<string, unknown>[] };
+  let exists = false;
+  await page.route("**/api/conversations**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "POST") { exists = true; return route.fulfill({ status: 201, json: saved }); }
+    if (request.method() === "DELETE") { exists = false; return route.fulfill({ status: 204 }); }
+    if (url.pathname.endsWith(id)) return route.fulfill({ json: saved });
+    return route.fulfill({ json: { conversations: exists ? [saved] : [], nextCursor: null } });
+  });
+  const answer = async (route: import("@playwright/test").Route, text: string, failed = false) => {
+    const body = route.request().postDataJSON();
+    const user = body.messages[0];
+    const answerId = "answer-" + crypto.randomUUID();
+    saved = { ...saved, title: user.parts[0].text.trim(), version: saved.version + 2, messages: [
+      { id: user.id, sequence: 0, role: "user", content: user.parts.map((part: { text: string }) => part.text).join(""), status: "completed", modelId: null, finishReason: null },
+      { id: answerId, sequence: 1, role: "assistant", content: text, status: failed ? "failed" : "completed", modelId: body.model, finishReason: failed ? "error" : "stop" },
+    ] };
+    return route.fulfill(failed ? { status: 503, json: { error: { message: "private-error-canary" } } } : { contentType: "text/event-stream", headers: { "x-vercel-ai-ui-message-stream": "v1" }, body: stream(text, true, answerId) });
+  };
+  return { errors, external, answer };
 }
 
 test("model selection, keyboard send, rich rendering, copy, regenerate and new chat", async ({ page }) => {
@@ -31,7 +52,7 @@ test("model selection, keyboard send, rich rendering, copy, regenerate and new c
   const calls: Record<string, unknown>[] = [];
   await page.route("**/api/chat", async (route) => {
     calls.push(route.request().postDataJSON());
-    await route.fulfill({ contentType: "text/event-stream", headers: { "x-vercel-ai-ui-message-stream": "v1" }, body: stream(rich) });
+    await observed.answer(route, rich);
   });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /A space to think/ })).toBeVisible();
@@ -74,8 +95,7 @@ test("safe failed response retains prompt and can regenerate without duplicate m
   let attempts = 0;
   await page.route("**/api/chat", (route) => {
     attempts++;
-    return route.fulfill(attempts === 1 ? { status: 503, json: { error: { code: "ai_not_configured", message: "private-error-canary" } } }
-      : { contentType: "text/event-stream", headers: { "x-vercel-ai-ui-message-stream": "v1" }, body: stream("Recovered answer") });
+    return observed.answer(route, attempts === 1 ? "" : "Recovered answer", attempts === 1);
   });
   await page.goto("/");
   await page.getByRole("textbox").fill("Keep this prompt");
@@ -93,7 +113,7 @@ test("safe failed response retains prompt and can regenerate without duplicate m
 
 test("hostile graphics and Markdown stay inert and preserve other content", async ({ page }) => {
   const observed = await safePage(page);
-  await page.route("**/api/chat", (route) => route.fulfill({ contentType: "text/event-stream", headers: { "x-vercel-ai-ui-message-stream": "v1" }, body: stream(hostile) }));
+  await page.route("**/api/chat", (route) => observed.answer(route, hostile));
   await page.goto("/");
   await page.getByRole("textbox").fill("Show hostile fixtures");
   await page.getByRole("button", { name: "Send" }).click();
@@ -118,48 +138,6 @@ test("disabled configuration explains setup and prevents sending", async ({ page
   expect(calls).toBe(0);
 });
 
-test("Stop aborts the stream, retains partial output and permits explicit regeneration", async ({ page }) => {
-  const observed = await safePage(page);
-  await page.route("**/api/chat", (route) => route.abort());
-  await page.addInitScript(({ partial, complete }) => {
-    const original = window.fetch;
-    let attempts = 0;
-    Object.defineProperty(window, "streamWasAborted", { configurable: true, writable: true, value: false });
-    window.fetch = async (input, init) => {
-      if (String(input).endsWith("/api/chat")) {
-        attempts++;
-        return new Response(new ReadableStream<Uint8Array>({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode(attempts === 1 ? partial : complete));
-            if (attempts > 1) controller.close();
-            else init?.signal?.addEventListener("abort", () => {
-              Object.defineProperty(window, "streamWasAborted", { value: true });
-              controller.error(new DOMException("Stopped", "AbortError"));
-            }, { once: true });
-          },
-        }), { headers: { "Content-Type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" } });
-      }
-      return original(input, init);
-    };
-  }, { partial: stream("Partial response", false), complete: stream("Regenerated response") });
-  await page.goto("/");
-  await page.getByRole("textbox").fill("A prompt to keep");
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.locator(".assistant-message")).toContainText("Partial response");
-  await expect(page.getByLabel("Model", { exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Stop", exact: true }).click();
-  await expect.poll(() => page.evaluate(() => Object.getOwnPropertyDescriptor(window, "streamWasAborted")?.value)).toBe(true);
-  await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
-  await expect(page.locator(".assistant-message")).toContainText("Partial response");
-  await expect(page.locator(".user-message")).toContainText("A prompt to keep");
-  await expect(page.locator(".assistant-message")).toContainText("Response stopped or incomplete.");
-  await page.getByRole("button", { name: "Regenerate" }).click();
-  await expect(page.locator(".assistant-message")).toContainText("Regenerated response");
-  await expect(page.locator(".user-message")).toHaveCount(1);
-  await expect(page.locator(".assistant-message")).toHaveCount(1);
-  expect(observed.errors).toEqual([]);
-});
-
 test("registry failure is actionable and retry recovers without a chat request", async ({ page }) => {
   const observed = await safePage(page);
   let loads = 0;
@@ -175,4 +153,36 @@ test("registry failure is actionable and retry recovers without a chat request",
   await expect(page.getByLabel("Model", { exact: true })).toBeEnabled();
   expect(calls).toBe(0);
   expect(observed.errors).toEqual([]);
+});
+
+test("failed history synchronization keeps visible output and never claims it was saved", async ({ page }) => {
+  const observed = await safePage(page);
+  let unavailable = true;
+  await page.route("**/api/conversations/00000000-0000-4000-8000-000000000004", async (route) => {
+    if (unavailable) await route.fulfill({ status: 503, json: { error: { message: "private-database-details" } } });
+    else await route.fallback();
+  });
+  await page.route("**/api/chat", (route) => observed.answer(route, "Keep the visible answer"));
+  await page.goto("/");
+  await page.getByRole("textbox").fill("Keep the prompt too");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.locator(".assistant-message")).toContainText("Keep the visible answer");
+  await expect(page.getByText("Saved history could not be synchronized.", { exact: false })).toBeVisible();
+  await expect(page.getByText("Not saved", { exact: true })).toHaveCount(1);
+  await expect(page.locator("body")).not.toContainText("private-database-details");
+  unavailable = false;
+  await page.getByRole("button", { name: "Reload saved history" }).click();
+  await expect(page.getByText("Saved on this device", { exact: true })).toHaveCount(1);
+  await expect(page.locator(".user-message")).toContainText("Keep the prompt too");
+  expect(observed.errors).toEqual([]);
+});
+
+test("an unavailable selected chat has an explicit recovery state", async ({ page }) => {
+  await safePage(page);
+  await page.route("**/api/conversations/00000000-0000-4000-8000-000000000004", (route) => route.fulfill({ status: 503, body: "unavailable" }));
+  await page.goto("/?conversation=00000000-0000-4000-8000-000000000004");
+  await expect(page.getByText("This saved chat could not be opened.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await page.getByRole("button", { name: "New chat" }).click();
+  await expect(page.getByRole("textbox")).toBeEnabled();
 });

@@ -5,6 +5,7 @@ import "server-only";
 import { createUIMessageStreamResponse, streamText, toUIMessageStream, type ModelMessage, type UIMessageChunk } from "ai";
 import type { AIConfiguration } from "./config";
 import type { ChatLifecycle } from "./lifecycle";
+import type { FinalMessageStatus } from "@/shared/conversations";
 import { configuredModel } from "./provider";
 
 export const MAX_OUTPUT_BYTES = 512 * 1024;
@@ -24,11 +25,18 @@ function publicChunk(chunk: UIMessageChunk, lifecycle: ChatLifecycle, textId: (i
   }
 }
 
+export type TurnPersistence = {
+  messageId: string;
+  initialMetadata: { conversationId: string; version: number; status: "pending" };
+  finish: (content: string, status: FinalMessageStatus, reason: string) => Promise<{ conversationId: string; version: number; status: FinalMessageStatus }>;
+};
+
 export function streamChat(
   configuration: AIConfiguration,
   model: string,
   messages: ModelMessage[],
   lifecycle: ChatLifecycle,
+  persistence: TurnPersistence,
 ): Response {
   const result = streamText({
     model: configuredModel(configuration, model, lifecycle),
@@ -44,9 +52,15 @@ export function streamChat(
     stream: result.stream,
     sendReasoning: false,
     sendSources: false,
-    generateMessageId: () => crypto.randomUUID(),
+    generateMessageId: () => persistence.messageId,
     onError: () => lifecycle.publicError(),
   }).getReader();
+  let content = "";
+  let providerFailed = false;
+  let saved: ReturnType<TurnPersistence["finish"]> | undefined;
+  const settle = (status: FinalMessageStatus, reason: string) => saved ??= persistence.finish(content, status, reason);
+  const interrupted = () => settle(lifecycle.reason === "cancelled" ? "stopped" : "failed",
+    lifecycle.reason === "cancelled" ? "cancelled" : lifecycle.reason === "timeout" ? "timeout" : lifecycle.reason === "response_too_large" ? "output_limit" : "error");
   let closed = false;
   let bytes = 0;
   const encoder = new TextEncoder();
@@ -57,11 +71,14 @@ export function streamChat(
   };
   const body = new ReadableStream<UIMessageChunk>({
     async pull(controller) {
-      const terminate = () => {
+      const terminate = async () => {
+        let errorText = lifecycle.publicError();
+        try { await interrupted(); } catch { errorText = "The response could not be saved. Reload saved history before continuing."; }
+        if (closed) return;
         if (lifecycle.reason !== "cancelled") {
-          controller.enqueue({ type: "error", errorText: lifecycle.publicError() });
+          controller.enqueue({ type: "error", errorText });
         }
-        controller.enqueue({ type: "abort", reason: lifecycle.publicError() });
+        controller.enqueue({ type: "abort", reason: errorText });
         closed = true;
         controller.close();
         lifecycle.dispose();
@@ -71,8 +88,9 @@ export function streamChat(
         while (!closed) {
           const next = await reader.read();
           if (closed) return;
-          if (lifecycle.signal.aborted) { terminate(); return; }
+          if (lifecycle.signal.aborted) { await terminate(); return; }
           if (next.done) {
+            if (!saved) { lifecycle.stop("provider_error"); await terminate(); return; }
             closed = true;
             controller.close();
             reader.releaseLock();
@@ -81,29 +99,39 @@ export function streamChat(
           }
           if (next.value.type === "finish" && (next.value.finishReason === "other" || next.value.finishReason === "tool-calls")) {
             lifecycle.stop("provider_error");
-            terminate();
+            await terminate();
             return;
           }
           // Forward text and lifecycle events only, without provider metadata or tool/file payloads.
-          const chunk = publicChunk(next.value, lifecycle, textId);
+          let chunk = publicChunk(next.value, lifecycle, textId);
           if (!chunk) continue;
+          if (chunk.type === "start") chunk = { ...chunk, messageId: persistence.messageId, messageMetadata: persistence.initialMetadata };
+          if (chunk.type === "error" || chunk.type === "abort") providerFailed = true;
           bytes += encoder.encode(JSON.stringify(chunk)).byteLength;
           if (bytes > MAX_OUTPUT_BYTES) {
             lifecycle.stop("response_too_large");
-            terminate();
+            await terminate();
             return;
           }
+          if (chunk.type === "finish") {
+            const status = !providerFailed && ["stop", "length"].includes(chunk.finishReason ?? "") && content.trim() ? "completed" : "failed";
+            const metadata = await settle(status, chunk.finishReason ?? "error");
+            if (metadata.status !== "completed") { lifecycle.stop("provider_error"); await terminate(); return; }
+            chunk = { ...chunk, messageMetadata: metadata };
+          }
+          if (chunk.type === "text-delta") content += chunk.delta;
           controller.enqueue(chunk);
           return;
         }
       } catch {
-        if (!closed) terminate();
+        if (!closed) await terminate();
       }
     },
     async cancel() {
       closed = true;
       lifecycle.stop("cancelled");
       lifecycle.dispose();
+      await interrupted().catch(() => {});
       await reader.cancel().catch(() => {});
     },
   });
@@ -134,6 +162,7 @@ export function streamChat(
       // Abort before cancelling the SDK's encoding pipeline, which propagates cancellation asynchronously.
       lifecycle.stop("cancelled");
       lifecycle.dispose();
+      await interrupted().catch(() => {});
       await encoded.cancel().catch(() => {});
     },
   }), { headers: response.headers });

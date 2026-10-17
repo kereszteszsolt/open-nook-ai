@@ -84,7 +84,7 @@ th { background: var(--badge); }
 .math-inline { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
 .katex { font-size: 1.05em; }
 @media (max-width: 640px) {
-  .session-note { display: none; }
+  .session-note { font-size: .7rem; max-width: 7rem; text-align: right; }
   .model-bar select { flex: 1; max-width: 100%; }
   .composer-controls > span { max-width: 12rem; font-size: .65rem; }
   .chat-header { padding-block: .75rem; }
@@ -100,3 +100,20 @@ th { background: var(--badge); }
   .token.number, .token.function { color: #f5bb89; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+.workspace { height: 100svh; display: grid; grid-template-columns: 15rem minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); max-width: 96rem; margin-inline: auto; }
+.history-toolbar { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: .3rem 1rem; border-bottom: 1px solid var(--border); }
+.workspace .chat-shell { height: 100%; min-width: 0; }
+.history-panel { padding: 1rem .6rem; border-right: 1px solid var(--border); overflow-y: auto; }
+.history-panel h2 { font-size: .85rem; margin: .5rem; color: var(--muted); }
+.history-panel ul { list-style: none; padding: 0; margin: 1rem 0; }
+.history-panel li { display: flex; align-items: center; border-radius: .5rem; }
+.history-panel li:hover { background: var(--badge); }
+.history-open { flex: 1; min-width: 0; background: transparent; text-align: left; color: var(--foreground); overflow-wrap: anywhere; font-size: .85rem; }
+.history-open[aria-current] { background: var(--badge); }
+@media (min-width: 801px) { .history-toolbar > button:first-child { visibility: hidden; } }
+@media (max-width: 800px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .history-panel { display: none; }
+  .history-panel.history-visible { display: block; grid-column: 1; grid-row: 2; z-index: 2; background: var(--background); width: min(85vw, 22rem); box-shadow: 5px 0 20px #0002; }
+  .workspace .chat-shell { grid-column: 1; grid-row: 2; }
+}

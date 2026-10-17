@@ -1,6 +1,6 @@
-# Architecture — target design for Release 0.1
+# Architecture — Release 0.1
 
-**Status: MVP target; ONK-001 foundation implemented.** Next.js, database readiness and the local PostgreSQL/Compose foundation exist. The chat, provider and conversation flows below remain planned. See [Local development](development.md) for the current runtime.
+Next.js serves the UI, OpenRouter streaming and PostgreSQL conversation routes in one application. See [release verification](releases/release-0.1-mvp/verification.md) for observed checks and [local development](development.md) for runtime commands.
 
 ## Boundaries
 
@@ -41,16 +41,17 @@ sequenceDiagram
     User->>UI: Select model, send message
     UI->>Route: POST /api/chat
     Route->>Route: Validate payload, model, limits
-    Route->>Store: Read conversation messages
+    Route->>Store: Compare version, save user and pending answer; read context
     Route->>SDK: Request permitted model
     SDK->>Provider: HTTPS streaming request
     Provider-->>SDK: Token/content stream
     SDK-->>UI: Streaming response
     UI-->>User: Show safe Markdown/visuals
-    Route->>Store: Save finalized user/assistant content
+    Route->>Store: Save final assistant content and status
+    Route-->>UI: Acknowledge saved completion
 ```
 
-Implementation order matters: a failed/cancelled stream must not leave misleading completed assistant messages. Define the transaction and stop/retry semantics when ONK-002 and ONK-004 are implemented, then test the behavior.
+The server owns conversation context. A short transaction compares the conversation version and reserves a turn before any provider call. No database transaction remains open during generation. A second transaction stores the bounded final text and status before the successful SSE finish. Stop and errors save partial text as stopped/failed. A request lease expires after the generation deadline plus five seconds; opening, changing or deleting that conversation then recovers abandoned pending work as failed. Regenerate replaces the latest assistant row, preserving its ID and sequence. See the [data model](data-model.md).
 
 ## Security and hosting constraints
 
@@ -58,7 +59,7 @@ Release 0.1 is for local, single-user use only. Bind the web port to localhost i
 
 ## Version compatibility checkpoint
 
-ONK-001 pins the Next.js, React, Prisma, TypeScript and Node.js foundation; see [Local development](development.md). During ONK-002/003, verify and pin compatible AI SDK and assistant-ui versions. Avoid experimental RSC `streamUI` and optional cloud-backed assistant-ui services; **assistant-ui components and the AI SDK run with your own Next.js server**.
+ONK-001 pins the Next.js, React, Prisma, TypeScript and Node.js foundation; see [Local development](development.md). The compatible AI SDK and assistant-ui versions are pinned in the lockfile. Avoid experimental RSC `streamUI` and optional cloud-backed assistant-ui services; **assistant-ui components and the AI SDK run with your own Next.js server**.
 
 ## See also
 

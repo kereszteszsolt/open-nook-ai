@@ -16,7 +16,7 @@ export function chatPayload(model: string, messages: UIMessage[], trigger: strin
     context.reduce((sum, message) => sum + message.parts.reduce((n, part) => n + part.text.length, 0), 0) > 24_000) {
     throw new Error("This conversation exceeds the request limits. Start a new chat or shorten your message.");
   }
-  const body = { model, messages: context, trigger, id, ...(messageId ? { messageId } : {}) };
+  const body = { model, messages: [context.at(-1)!], trigger, id, ...(messageId ? { messageId } : {}) };
   if (new TextEncoder().encode(JSON.stringify(body)).byteLength > 64 * 1024) {
     throw new Error("This conversation exceeds the request limits. Start a new chat or shorten your message.");
   }

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Release 0.1 in progress.** ONK-001 provides the local Next.js/PostgreSQL foundation; ONK-002 adds the server-only model registry and streaming API. ONK-003 adds assistant-ui chat and safe rich previews; ONK-004 remains planned. Provider verification uses mocks; live connectivity has not been tested. The original documentation-only review is retained below as historical evidence.
+**Release 0.1 implemented for local use.** ONK-001–004 provide the Next.js/PostgreSQL stack, server-only model registry/streaming, assistant-ui and safe rich rendering, saved conversation history and a CI workflow. Local checks use mocked providers; live connectivity and hosted CI execution are **Not run**. Earlier evidence remains historical and describes the code at each story boundary.
 
 ## Evidence table
 
@@ -11,7 +11,7 @@
 | ONK-001 | Implemented | 13 Vitest tests, lint, typecheck, Prisma validation and build passed | Compose and browser passed; live model Not run | Foundation only; see detailed evidence below |
 | ONK-002 | Implemented | 66 new tests / 79 total, lint, typecheck and production builds passed | Compose + real HTTP with mocked provider passed; live model Not run | No chat UI or persistence yet; see evidence below |
 | ONK-003 | Implemented | 55 new tests / 134 total, lint, typecheck and production builds | 12 browser cases; Compose and real HTTP with mocked upstream; live model Not run | In-memory chat only; see detailed evidence below |
-| ONK-004 | Planned | Not run | Not run | Persistence, E2E and CI not implemented |
+| ONK-004 | Implemented | 139 unit + 11 PostgreSQL tests, lint/types/build | 20 browser cases; Compose restart/recreation and image audits; live model Not run | CI configured, hosted execution Not run; see evidence below |
 
 ## Recording format
 
@@ -182,3 +182,70 @@ See [Rich rendering](../../rendering.md) for supported syntax, limits and implem
 - Final `docker compose --env-file /tmp/open-nook-onk003.env -p open-nook-ai-onk003 up -d --no-deps --force-recreate --wait --wait-timeout 120 web`: passed. Read-only Docker/HTTP checks confirmed a healthy non-root runtime, connected DB, disabled model API with a blank key and no `/checks` mount or `NODE_OPTIONS`. The prior ONK-001/002 stacks remained healthy. The runtime remains available on **http://127.0.0.1:33030** with generation disabled until configured.
 - A focused Chromium visual check (`node /checks/visual.mjs` in the same tools container) passed for the actual disabled setup at **320 px/dark**, without horizontal overflow. It also captured and inspected the corrected Mermaid SVG text/labels without foreign objects. No page errors or external requests. Captures remain in `/tmp/open-nook-onk003-check/`.
 - `python3 /tmp/open-nook-onk003-check/audit.py`: passed local links/fences, source notices, exact package/lock consistency and candidate-file/client secret scans. Git ignore checks confirmed `.env`, `.next`, generated Prisma Client and browser artifacts stay outside the commit. `git diff HEAD --check` and new-file whitespace checks passed. All changes were reviewed, including untracked implementation/tests; the staged diff was empty at implementation closeout. Commit approval was subsequently provided separately by the user on 2026-10-17.
+
+## ONK-004 implementation verification — 2026-10-17
+
+### Scope and environment
+
+Implemented the approved final MVP story: Conversation/Message schema and additive migration, versioned history CRUD, server-owned context and transactional stream finalization, responsive history UI, deterministic PostgreSQL/browser tests, GitHub Actions and current documentation. No later story, auth, MCP, extra backend or provider was added. No dependency/version change was needed. Existing ONK-001/002/003 stacks, their data and the ignored root `.env` were preserved.
+
+Checks ran from this WSL checkout using Docker because host Node is unavailable. Node **24.20.0**, npm **11.19.0**, PostgreSQL **18.6-bookworm**, Playwright **1.62.1** and Chromium **151.0.7922.34** were used. Source checks used this actual wrapper (replace `<command>` with a table command):
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" \
+  --mount type=bind,src="$PWD",dst=/app --workdir /app \
+  --env CHECKPOINT_DISABLE=1 open-nook-ai-onk001-base <command>
+```
+
+The isolated Compose project was `open-nook-ai-onk004`, web **33040**, database `open_nook_test_004`, own persistent volume. `/tmp/open-nook-onk004.env` held synthetic local DB settings and an empty provider key. Database-test containers joined `open-nook-ai-onk004_default` with `TEST_DATABASE_URL` pointing to that DB. Nothing truncated personal tables or deleted any volume.
+
+### Commands and observed outcomes
+
+| Actual command | Observed result |
+| --- | --- |
+| `npm run db:generate` | Passed with Prisma 7.10.1 and both application models |
+| `prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script` | Generated the additive history SQL; original foundation migration bytes left unchanged |
+| `npm run db:migrate` against the isolated DB | Passed; foundation + conversation-history migrations applied. Subsequent starts reported no pending migrations |
+| `npm test -- tests/chat.test.ts tests/chat-transport.test.ts` | First run: 51/52 passed; the old UTF-8 test expected the full client context on the wire. Updated it for latest-prompt-only transport; the server still enforces complete context limits |
+| `npm test` | Final full suite passed: **139 tests in 7 files**, all provider calls mocked/blocked by default |
+| `npm test -- tests/chat.test.ts` | After the final safe finish-reason correction, all **51** chat tests passed again |
+| `npm run test:db` | **11 tests passed** against real isolated PostgreSQL, including the mapped Host/Origin regression. An initial merged Vitest config mistakenly selected unit files; it was replaced with a dedicated config before recording DB proof |
+| `npm run lint` | Final pass, zero warnings. Earlier passes exposed render-time assignment of a callback ref and a missing effect dependency; fixed by assigning in an effect with complete dependencies. One narrowly documented suppression covers the SDK's event callback, which the lint analyzer treats as a constructor-time call |
+| `npm run typecheck` | Passed for application, generated route/client types and all TypeScript tests/configuration |
+| `docker compose --env-file /tmp/open-nook-onk004.env -p open-nook-ai-onk004 -f compose.yaml -f compose.dev.yaml build web` | Passed, including clean dependency install, `npm run build`, Prisma generation and integrated TypeScript. Final image rebuilt after review correction; five dynamic API paths and the static chat page compiled |
+| CI YAML validation using installed `js-yaml` in the Node container | Passed: push/PR triggers, read-only permissions, immutable action SHAs, required commands, no CI-secret reference. Initial attempt to import uninstalled `yaml` failed; used existing ESLint `js-yaml` instead, with no added dependency |
+
+The DB suite proves stable ordering, stored-context continuation, safe metadata, one winner in a simultaneous version race, replay rejection, same-row regeneration, late-callback rejection, stopped/failed history, lease recovery, empty-completion handling, context/message limits, pagination, version/active deletion guards, cascade and HTTP CRUD. Unit tests additionally prove no provider access before the initial DB commit and no successful SSE finish after a failed final save. Default tests do not connect to a real provider.
+
+### Browser and runtime proof
+
+Temporary Compose override `/tmp/open-nook-onk004-check/compose.mock.yaml` mounted the versioned `tests/fixtures/openrouter-mock.mjs` and set its explicit test flag, literal fake key and `test/model-one`. The preload refuses a non-test database/key and replaces the fixed upstream endpoint; every other server fetch throws. Health probes unset the preload. The six persistence browser cases used real Next.js Route Handlers, AI SDK/OpenRouter adapter, Prisma and PostgreSQL; they did not replace application API responses.
+
+```bash
+docker compose --env-file /tmp/open-nook-onk004.env -p open-nook-ai-onk004 \
+  -f compose.yaml -f compose.dev.yaml \
+  -f /tmp/open-nook-onk004-check/compose.mock.yaml up -d --wait --wait-timeout 120
+
+docker run --rm --user "$(id -u):$(id -g)" --network host \
+  --mount type=bind,src="$PWD",dst=/app \
+  --mount type=bind,src=/home/zsolti-wsl/.cache/ms-playwright,dst=/ms-playwright,readonly \
+  --workdir /app --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+  --env E2E_BASE_URL=http://127.0.0.1:33040 --env E2E_PERSISTENCE=1 \
+  open-nook-ai-browser-tools npm run test:browser
+```
+
+- Final full suite: **20/20 passed** across desktop/light 1280×900 and mobile/dark 360×800. Seven API-isolated UI scenarios verify rich rendering/real diagram labels, clipboard, keyboard/model choice, explicit regeneration, hostile content, disabled configuration, registry retry, visible-output retention after failed history sync and selected-chat recovery. Three full-stack journeys verify create/reload/resume/copy/reopen/delete, Stop/reload/regenerate with stable IDs, and persisted failures without duplicates.
+- Initial full-stack browser run: the 12 then-existing isolated UI cases passed, while all six DB journeys failed. Trace showed `POST /api/conversations` returning `403`: the original Origin check used the internal container URL/port. Fixed it to compare the browser Origin with the incoming Host and protocol, added unit + DB regressions, then all journeys passed. Foreign origins remain rejected.
+- After the final image rebuild and web/db recreation, `npm run test:browser -- tests/browser/history.spec.ts` passed **all six** persistence cases again. No real OpenRouter call was made.
+- `python3 /tmp/open-nook-onk004-check/persistence.py create`, then `check`, stored a completed two-message synthetic fixture and compared SHA-256 of its full JSON detail. `docker compose ... restart web db`, health/readback, then `docker compose ... up -d --force-recreate --wait --wait-timeout 120` and another readback all passed. Conversation UUID/version/timestamps and message IDs/order/content/status/metadata were unchanged; the original volume was reused.
+- `node /checks/visual.mjs` in `open-nook-ai-browser-tools` captured actual saved-history views at desktop/light and **320 px/mobile/dark**, plus the open mobile History panel. Two persisted messages loaded; no page errors or horizontal document overflow. Captures are `/tmp/open-nook-onk004-check/history-*.png`; these are actual app views using a clearly synthetic conversation.
+- Network-disabled final production-image audit (`node /image-audit.mjs` in `open-nook-ai-onk004-web`) passed: no `.env*`, baked runtime settings, test/agent directories, Vitest/Playwright/jsdom, or provider endpoint/private settings in **103 client JavaScript files**. Actual local/test secret values were read for comparison but never printed.
+
+### Delivery limits and review
+
+- [GitHub Actions](../../../.github/workflows/ci.yaml) is configured with PostgreSQL service, pinned Node/npm and immutable official checkout/setup-node/upload-artifact revisions. It runs lint, types, unit tests, migrations, isolated DB tests, build and all guarded mock browser journeys without API secrets. **Hosted execution: Not run**; no push or remote run was authorized.
+- **Live OpenRouter connectivity, current model compatibility, real provider cancellation/billing and charged generation: Not run.** No billable test was requested. Mocks are not cloud-connectivity proof. Windows-host browser execution: **Not run**; evidence is Linux Chromium in Docker.
+- Reviewed tracked and new source/tests/config/docs together. Source SPDX boundaries, exact dependency/lockfile pins and local documentation links were audited using `python3 /tmp/open-nook-onk004-check/audit.py`; private values were absent from candidate files. Whitespace checks passed, preserving generated migration SQL's existing blank-at-EOF convention. Staged diff was empty; implementation did not commit or push.
+- The app remains single-user, unauthenticated and localhost-only. One active request per conversation is not a global cost/rate limit. History is bounded to 32 stored messages, 8,000 UTF-16 units per context message and 24,000 context total; no silent history truncation or automatic paid retry occurs.
+
+- Final restoration: `docker compose --env-file /tmp/open-nook-onk004.env -p open-nook-ai-onk004 -f compose.yaml up -d --force-recreate --wait --wait-timeout 120` passed. Read-only Docker/HTTP assertions confirmed healthy non-root web/db, `127.0.0.1:33040`, no published DB port, the same persistent volume, an empty provider key, disabled chat, no fixture mount or `NODE_OPTIONS`, and all earlier ONK-001/002/003 containers healthy. Saved-history fingerprint still matched after restoration. `docker compose ... config --quiet` and `exec -T web ./node_modules/.bin/prisma migrate status` passed with both migrations current. The isolated local runtime remains available at **http://127.0.0.1:33040**; existing `.env` settings were not activated or changed.

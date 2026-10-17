@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress — ONK-001–003 implemented.** Next.js, database readiness, Prisma migration infrastructure, local Compose, the server-only OpenRouter API and assistant-ui chat with safe rich previews are available. Provider checks are mocked; live connectivity is not verified. Conversation history resets on reload; persistence and CI remain ONK-004. See [verification.md](verification.md) for observed outcomes.
+**Implemented locally — ONK-001–004.** The single Next.js app includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL conversation CRUD/history. Local mock/API/database/browser/Compose checks passed; GitHub Actions is configured but a hosted run and live OpenRouter connectivity are **Not run**. No publication or push is implied. See [verification.md](verification.md) for actual evidence.
 
 ## Goal
 
@@ -24,6 +24,6 @@ Build a minimal self-hosted Next.js chat application with assistant-ui, AI SDK s
 | [ONK-001](stories/ONK-001-nextjs-foundation-and-database.md) | App, DB and Docker foundation | Implemented |
 | [ONK-002](stories/ONK-002-openrouter-streaming-model-selection.md) | Server-side model allowlist and streaming | Implemented |
 | [ONK-003](stories/ONK-003-assistant-ui-rich-rendering.md) | Chat UI, safe Markdown/math/diagrams/charts | Implemented |
-| [ONK-004](stories/ONK-004-conversation-persistence-and-verification.md) | History, tests, CI, runtime proof and docs | Planned |
+| [ONK-004](stories/ONK-004-conversation-persistence-and-verification.md) | History, tests, CI, runtime proof and docs | Implemented |
 
 Record **observed outcomes**, not expected results, in [verification.md](verification.md). Implement only after explicit approval; approving one story does not approve the next or authorize a commit.

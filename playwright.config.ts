@@ -8,7 +8,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: "list",
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://127.0.0.1:33030",
+    baseURL: process.env.E2E_BASE_URL ?? "http://127.0.0.1:33040",
     browserName: "chromium",
     headless: true,
     screenshot: "only-on-failure",

@@ -1,4 +1,4 @@
-# OpenRouter configuration — ONK-002
+# OpenRouter configuration — Release 0.1
 
 Model selection is intentionally **explicit, bounded and server-controlled**. There is no general model search or provider catalogue fetch in Release 0.1.
 
@@ -37,3 +37,7 @@ Use `.env` for local secrets, ignored by Git. Never put a key in variables prefi
 ## Provider test boundaries
 
 Mock requests in CI. Real streaming and model-compatibility smoke tests require an API key, explicit approval and a note in the verification record about model ID, observed behavior and approximate cost if known. Do not infer a successful live provider test from a mocked success.
+
+## Saved conversations
+
+Model IDs are saved on assistant rows for provenance. History can be read or deleted with generation disabled. Removing a model does not rewrite older answers or permit that ID on new requests. Select an available configured model explicitly before resuming/regenerating. Neither history loading, title generation nor error recovery makes hidden provider calls. Tests and CI use synthetic keys and a network-denying provider fixture; no real API secret belongs in CI.

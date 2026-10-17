@@ -8,9 +8,17 @@ import { MAX_OUTPUT_BYTES } from "@/server/ai/stream";
 import { MAX_REQUEST_BYTES } from "@/server/ai/request";
 import { chatRequest, fixtureResponse, providerChunk, streamEvents, TEST_KEY, TEST_MODEL, validChatBody } from "./provider-fixture";
 
+vi.mock("@/server/conversations/store", () => ({ beginTurn: vi.fn(), finishTurn: vi.fn() }));
+import { beginTurn, finishTurn } from "@/server/conversations/store";
+
 let network: ReturnType<typeof vi.fn<typeof fetch>>;
 
 beforeEach(() => {
+  vi.mocked(beginTurn).mockImplementation(async (input) => ({
+    conversationId: input.conversationId, requestId: input.requestId, messageId: "saved-answer", version: input.version + 1,
+    messages: [{ role: "user", content: input.user.content }],
+  }));
+  vi.mocked(finishTurn).mockImplementation(async (turn, _content, status) => ({ conversationId: turn.conversationId, version: turn.version + 1, status }));
   vi.stubEnv("OPENROUTER_API_KEY", TEST_KEY);
   vi.stubEnv("OPENROUTER_MODEL_1", TEST_MODEL);
   network = vi.fn<typeof fetch>(async (_url, init) => fixtureResponse([
@@ -115,7 +123,7 @@ describe("real AI SDK and OpenRouter adapter with mocked fetch", () => {
     const text = await response.text();
     const events = streamEvents(text);
     expect(events.filter((event) => event.type === "text-delta").map((event) => event.delta).join("")).toBe("Hello world");
-    expect(events).toContainEqual({ type: "finish", finishReason: "stop" });
+    expect(events).toContainEqual(expect.objectContaining({ type: "finish", finishReason: "stop", messageMetadata: { conversationId: validChatBody().conversationId, version: 2, status: "completed" } }));
     expect(text).toContain("data: [DONE]");
     expect(text).not.toContain(TEST_KEY);
     expect(network).toHaveBeenCalledOnce();
@@ -133,12 +141,12 @@ describe("real AI SDK and OpenRouter adapter with mocked fetch", () => {
   });
 
   it("accepts bounded UI transport context, forwarding only roles and text", async () => {
-    const body = validChatBody();
-    const response = await POST(chatRequest({
-      ...body, id: "ephemeral-chat", trigger: "regenerate-message", messageId: "previous-response",
-      messages: [body.messages[0],
-        { id: "a1", role: "assistant", parts: [{ type: "text", text: "Earlier answer", state: "done" }] },
-        { id: "u2", role: "user", parts: [{ type: "text", text: "More " }, { type: "text", text: "please" }] }],
+    vi.mocked(beginTurn).mockResolvedValueOnce({ conversationId: validChatBody().conversationId, requestId: validChatBody().requestId,
+      messageId: "saved-answer", version: 1, messages: [
+        { role: "user", content: "Hello" }, { role: "assistant", content: "Earlier answer" }, { role: "user", content: "More please" },
+      ] });
+    const response = await POST(chatRequest({ ...validChatBody(), id: "ephemeral-chat",
+      messages: [{ id: "u2", role: "user", parts: [{ type: "text", text: "More " }, { type: "text", text: "please" }] }],
     }));
     await response.text();
     const sent = JSON.parse(String(network.mock.calls[0][1]?.body));
@@ -348,4 +356,48 @@ describe("timeout and cancellation", () => {
     await (await POST(chatRequest())).text();
     expect(vi.getTimerCount()).toBe(0);
   });
+});
+
+describe("persistent stream acknowledgements", () => {
+  it("stores the user before calling a provider and finalizes text before reporting completion", async () => {
+    const response = await POST(chatRequest());
+    const events = streamEvents(await response.text());
+    expect(beginTurn).toHaveBeenCalled();
+    expect(finishTurn).toHaveBeenLastCalledWith(expect.objectContaining({ messageId: "saved-answer" }), "Hello world", "completed", "stop");
+    expect(events.at(-1)).toMatchObject({ type: "finish", messageMetadata: { status: "completed" } });
+  });
+  it("never invokes the provider when the initial database transaction fails", async () => {
+    vi.mocked(beginTurn).mockRejectedValueOnce(new Error("private database details"));
+    const response = await POST(chatRequest());
+    expect(response.status).toBe(503); expect(await response.text()).not.toContain("private database");
+    expect(network).not.toHaveBeenCalled();
+  });
+  it("does not report completion when saving the final answer fails", async () => {
+    vi.mocked(finishTurn).mockRejectedValueOnce(new Error("private database failure"));
+    const events = streamEvents(await (await POST(chatRequest())).text());
+    expect(events.some((event) => event.type === "finish")).toBe(false);
+    expect(events).toContainEqual(expect.objectContaining({ type: "error", errorText: expect.stringContaining("could not be saved") }));
+    expect(JSON.stringify(events)).not.toContain("private database");
+  });
+  it("persists Stop once without a completed acknowledgement", async () => {
+    const controller = new AbortController();
+    network.mockImplementation(async (_url, init) => fixtureResponse([providerChunk({ content: "Partial" })], init?.signal, true));
+    const reader = (await POST(chatRequest(undefined, { signal: controller.signal }))).body!.getReader();
+    let text = "";
+    while (!text.includes("Partial")) text += new TextDecoder().decode((await reader.read()).value);
+    controller.abort();
+    while (true) { const next = await reader.read(); if (next.done) break; text += new TextDecoder().decode(next.value); }
+    expect(finishTurn).toHaveBeenCalledOnce();
+    expect(finishTurn).toHaveBeenCalledWith(expect.anything(), "Partial", "stopped", "cancelled");
+    expect(streamEvents(text).some((event) => event.type === "finish")).toBe(false);
+  });
+});
+
+it("accepts the browser's Docker-mapped host origin and rejects foreign origins before provider access", async () => {
+  const headers = { "Content-Type": "application/json", Host: "127.0.0.1:33040", Origin: "http://127.0.0.1:33040" };
+  expect((await POST(chatRequest(undefined, { headers: { ...headers, Origin: "https://foreign.invalid" } }))).status).toBe(403);
+  expect(network).not.toHaveBeenCalled();
+  const accepted = await POST(chatRequest(undefined, { headers }));
+  expect(accepted.status).toBe(200); await accepted.text();
+  expect(network).toHaveBeenCalledOnce();
 });

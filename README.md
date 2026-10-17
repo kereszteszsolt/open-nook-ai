@@ -3,15 +3,15 @@
 > **A self-hosted, extensible AI assistant — starting with a simple, capable chat.**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-D22128?style=flat-square)](LICENSE)
-![Status: MVP in development](https://img.shields.io/badge/status-MVP%20in%20development-64748b?style=flat-square)
+![Status: Local MVP implemented](https://img.shields.io/badge/status-local%20MVP%20implemented-64748b?style=flat-square)
 ![Next.js](https://img.shields.io/badge/Next.js-16.4.2-1A1A1A?style=flat-square)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-server%20API-6C5CE7?style=flat-square)
 
-**OpenNook AI** is a planned **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. Later phases may add **read-only MCP tools** and **custom, explicitly activated skills**.
+**OpenNook AI** is a **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. Later phases may add **read-only MCP tools** and **custom, explicitly activated skills**.
 
-> **Repository status: ONK-001–003 implemented.** Release 0.1 is **in development**. The local Compose stack includes database readiness, a safe model registry, server-only OpenRouter streaming and an assistant-ui chat with bounded Markdown/code/math/diagram/chart rendering. Provider behavior is verified with mocks; live connectivity is not tested. Conversations stay in memory and reset on reload; persistent history and CI remain ONK-004. The diagrams describe the target MVP; actual checks are recorded in [release verification](docs/releases/release-0.1-mvp/verification.md).
+> **Repository status: ONK-001–004 implemented.** The local Compose stack includes server-only OpenRouter streaming, assistant-ui chat, bounded safe rich rendering and PostgreSQL conversation history. GitHub Actions checks are configured. Provider behavior is tested with mocks; live connectivity and a hosted CI run are not verified. See [release verification](docs/releases/release-0.1-mvp/verification.md) for actual evidence.
 
-## Planned Release 0.1 — AI Chat MVP
+## Release 0.1 — AI Chat MVP
 
 - **Chat and controls:** create a conversation, send prompts, stream responses, stop generation, retry an answer, copy messages and code blocks.
 - **Configurable models:** select from up to **five** explicit OpenRouter model IDs in the server environment. Empty slots are hidden; unknown model IDs are rejected.
@@ -22,7 +22,7 @@
 
 **Not included in 0.1:** MCP, tools, custom skills, image uploads, accounts, public multi-user hosting, RAG or a separate NestJS API.
 
-## How it is intended to work
+## How it works
 
 1. Run the application locally and configure an OpenRouter API key and at least one supported model.
 2. Open the chat, choose a listed model and enter a message.
@@ -40,16 +40,17 @@ sequenceDiagram
     User->>UI: Choose configured model and send message
     UI->>API: POST /api/chat
     API->>API: Validate model, payload and access scope
-    API->>DB: Read permitted conversation context
+    API->>DB: Lock version, save user and pending answer; read context
     API->>AI: Start model request
     AI->>OR: Streaming LLM API call
     OR-->>AI: Response stream
     AI-->>UI: Stream response chunks
     UI-->>User: Render safe, incremental content
-    API->>DB: Store completed messages and metadata
+    API->>DB: Save final answer and status
+    API-->>UI: Acknowledge saved completion
 ```
 
-## Planned architecture
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -70,7 +71,7 @@ The OpenRouter API key stays **server-side**. Conversation data stays in the sel
 
 More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · [Data model](docs/data-model.md) · [Security](docs/security.md).
 
-## Planned technology stack
+## Technology stack
 
 | Area | Technology |
 | --- | --- |
@@ -101,7 +102,7 @@ OPENROUTER_MODEL_5=
 
 Only non-empty, unique, configured IDs are offered. If the key or all slots are missing, the app explains what must be configured. Select currently available, compatible Qwen, Llama or Mistral models yourself; this baseline does not assume specific model names or prices. See [Model configuration](docs/model-configuration.md).
 
-## Local setup — foundation and streaming API
+## Local setup
 
 To run the current local chat and model/database APIs:
 
@@ -125,7 +126,7 @@ Only **Release 0.1** has committed story acceptance criteria. Future MCP and Ski
 | [Release 0.1](docs/releases/release-0.1-mvp/README.md) | MVP story order and implementation status |
 | [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual commands, observed results and remaining checks |
 | [Local development](docs/development.md) | Current foundation versions, Compose and native setup |
-| [API contract](docs/api-contract.md) | Implemented models/chat streaming and planned conversation routes |
+| [API contract](docs/api-contract.md) | Implemented models/chat/history routes |
 | [Model configuration](docs/model-configuration.md) | Allowlisted OpenRouter models and secrets |
 | [Testing](docs/testing.md) | Unit/renderer/browser checks without billable provider calls |
 | [Rich rendering](docs/rendering.md) | Supported Markdown, math, Mermaid and Vega-Lite syntax and safety limits |

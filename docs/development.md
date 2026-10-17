@@ -1,6 +1,6 @@
-# Local development — ONK-001–003
+# Local development — Release 0.1
 
-The app provides a responsive assistant-ui chat with safe rich previews, database readiness, `GET /api/models` and a server-only `POST /api/chat` stream. Chat state is in memory and resets on reload; conversation storage remains ONK-004. Provider checks use mocks; live OpenRouter connectivity has not been tested.
+The app provides a responsive assistant-ui chat with safe rich previews, database readiness, `GET /api/models` and a server-only `POST /api/chat` stream. Conversation CRUD and ordered history persist through PostgreSQL. Provider checks use mocks; live OpenRouter connectivity has not been tested.
 
 ## Tested foundation versions
 
@@ -36,7 +36,7 @@ Open `http://localhost:3000`. If another app uses that port, set `APP_PORT` in `
 
 Only `web` and `db` run. The web port binds to `127.0.0.1`; the database has no published port in the base configuration. Its named volume mounts at `/var/lib/postgresql`, the PostgreSQL 18 image's persistent parent directory.
 
-The web entrypoint validates `DATABASE_URL`, applies committed migrations with `prisma migrate deploy`, then starts the non-root Next.js process. The initial migration establishes Prisma's migration history without application tables. Conversation models and CRUD belong to ONK-004.
+The web entrypoint validates `DATABASE_URL`, applies committed migrations with `prisma migrate deploy`, then starts the non-root Next.js process. The initial migration establishes Prisma's migration history without application tables. The additive history migration creates Conversation/Message tables, enums, unique order/ID constraints and cascading deletes.
 
 ```bash
 docker compose ps
@@ -78,8 +78,8 @@ npm run build
 npm start
 ```
 
-Tests mock the database for health success/error cases, validate environment settings and exercise the actual AI SDK/OpenRouter adapter with explicitly mocked fetch. Test setup clears all provider environment slots and blocks unmocked global fetch; no secret or live provider call is needed. They do not prove a live database connection; see the release [verification](releases/release-0.1-mvp/verification.md) for actual Compose outcomes. Building, generating Prisma Client and type checking do not require a live database or an OpenRouter key. Runtime startup requires a complete PostgreSQL connection URL.
+Tests mock the database for health success/error cases, validate environment settings and exercise the actual AI SDK/OpenRouter adapter with explicitly mocked fetch. Test setup clears all provider environment slots and blocks unmocked global fetch; no secret or live provider call is needed. `npm run test:db` separately exercises a real isolated PostgreSQL database; unit tests alone do not prove its connectivity; see the release [verification](releases/release-0.1-mvp/verification.md) for actual Compose outcomes. Building, generating Prisma Client and type checking do not require a live database or an OpenRouter key. Runtime startup requires a complete PostgreSQL connection URL.
 
-Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database/provider settings only at runtime. Provider retries and fallbacks are disabled; timeout, cancellation and bounded text streaming are tested. Renderer tests cover normal and hostile content; the Playwright suite intercepts every chat request and blocks external browser loads.
+Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database/provider settings only at runtime. Provider retries and fallbacks are disabled; timeout, cancellation and bounded text streaming are tested. Renderer tests cover normal and hostile content; UI fixture tests intercept model/chat/history requests; persisted-history tests use the guarded mock provider with real Route Handlers and PostgreSQL.
 
 Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [Prisma Client v7](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/introduction), [Prisma generation without models](https://www.prisma.io/docs/cli/v7/generate), [PostgreSQL container persistence](https://docs.docker.com/guides/postgresql/immediate-setup-and-data-persistence/).
