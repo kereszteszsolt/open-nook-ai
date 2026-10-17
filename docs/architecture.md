@@ -1,4 +1,4 @@
-# Architecture — Release 0.1
+# Architecture — chat and MCP discovery
 
 Next.js serves the UI, OpenRouter streaming and PostgreSQL conversation routes in one application. See [release verification](releases/release-0.1-mvp/verification.md) for observed checks and [local development](development.md) for runtime commands.
 
@@ -8,7 +8,7 @@ Next.js serves the UI, OpenRouter streaming and PostgreSQL conversation routes i
 - **LLM:** OpenRouter is the only MVP LLM provider. The Vercel AI SDK handles streaming and compatible model requests; the backend only exposes a short allowlist of configured models.
 - **UI:** assistant-ui provides chat interaction primitives. Small custom React renderers add code copy, KaTeX mathematics, Mermaid diagrams and Vega-Lite visualizations.
 - **Persistence:** Prisma + PostgreSQL store conversations and finalized messages. Docker Compose runs `web` and `db` with a persistent DB volume.
-- **Future extensions:** MCP tools, runtime skills and quizzes have **planned story files** for Releases 0.2–0.4; they are **not** part of the implemented 0.1 data model, tool list or routes.
+- **MCP discovery:** ONK-005 adds explicit Context7 discovery with server-only configuration, a fixed destination/tool policy and process-local state. Model tool execution, runtime Skills and quizzes remain planned; discovery is separate from Release 0.1 chat generation.
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,9 @@ flowchart LR
     end
     Person <--> Web
     AI -->|HTTPS + server-only API key| OR[OpenRouter]
-    Future[Future only: MCP client + Skills] -.-> Routes
+    Routes -->|Explicit enable only| Discovery[MCP client and discovery policy]
+    Discovery --> Context7[Context7 metadata]
+    Future[Planned: model tool execution and Skills] -.-> Routes
 ```
 
 ## MVP flow
@@ -55,6 +57,8 @@ The server owns conversation context. A short transaction compares the conversat
 
 ## Security and hosting constraints
 
+ONK-005's `GET /api/integrations/context7` reads local status only. An explicit same-origin POST may initialize one Streamable HTTP session, list bounded metadata and close the session. The manager retains only a filtered snapshot in the single server process; it resets disabled on restart and does not modify Prisma/history or provide tools/instructions to the chat model. See [MCP configuration](mcp-configuration.md) for transport and network limits.
+
 Release 0.1 is for local, single-user use only. Bind the web port to localhost in Compose. Do not imply that an unauthenticated app is ready for public internet hosting. See [Security](security.md) for untrusted Markdown/Mermaid/Vega specs and API key handling.
 
 ## Version compatibility checkpoint
@@ -70,7 +74,7 @@ ONK-001 pins the Next.js, React, Prisma, TypeScript and Node.js foundation; see 
 ```mermaid
 flowchart TB
     App[Existing Next.js chat and persistence]
-    App -.->|Release 0.2 planned| MCP[Trusted MCP client + server permissions]
+    App -.->|ONK-006 planned| MCP[Controlled model tool execution]
     App -.->|Release 0.3 planned| Skills[Manual user skills + allowed tool binding]
     App -.->|Release 0.4 planned| Quiz[Practice quiz + server grading]
     App -.->|Release 0.4 planned| Questions[Ungraded clarification UI]
@@ -79,4 +83,4 @@ flowchart TB
     Questions -.-> LLM
 ```
 
-Brand identity is described in [branding.md](branding.md); the metadata does not alter legal notices. Release 0.4 details are in [quizzes.md](quizzes.md). None of these planned layers has implementation or verification evidence yet.
+Brand identity is described in [branding.md](branding.md); the metadata does not alter legal notices. Release 0.4 details are in [quizzes.md](quizzes.md). These remaining planned layers have no implementation evidence. ONK-005 discovery has separate [Release 0.2 verification](releases/release-0.2-mcp-tool-integration/verification.md).

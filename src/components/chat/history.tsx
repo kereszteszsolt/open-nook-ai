@@ -8,6 +8,7 @@ import { z } from "zod";
 import { brand } from "@/shared/branding";
 import type { ConversationSummary, SavedConversation } from "@/shared/conversations";
 import { loadChat, loadHistory, removeChat, selectChatUrl } from "./history-client";
+import { Context7Integration } from "../integrations/context7";
 
 type SessionProps = { initial?: SavedConversation; onSaved: () => void; onBusy: (busy: boolean) => void };
 export function History({ children }: { children: (props: SessionProps) => ReactNode }) {
@@ -63,6 +64,8 @@ export function History({ children }: { children: (props: SessionProps) => React
     <div className="history-toolbar">
       <button type="button" className="quiet-button" aria-expanded={visible} aria-controls="saved-history" onClick={() => setVisible((value) => !value)}>History</button>
       <button type="button" className="quiet-button" disabled={busy || loading} onClick={() => { setSelected(undefined); setOpenFailed(false); setSessionKey((key) => key + 1); selectChatUrl(); setVisible(false); }}>New chat</button>
+      <div className="history-toolbar-actions">
+      <Context7Integration />
       <details className="brand-about">
         <summary>About</summary>
         <div className="brand-about-panel">
@@ -79,6 +82,7 @@ export function History({ children }: { children: (props: SessionProps) => React
           <p className="brand-copyright">© 2026 {brand.authorName} · {brand.license}</p>
         </div>
       </details>
+      </div>
     </div>
     <aside id="saved-history" className={`history-panel ${visible ? "history-visible" : ""}`} aria-label="Saved chats">
       <h2>Saved chats</h2>

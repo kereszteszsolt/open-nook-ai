@@ -24,8 +24,10 @@ Compose mounts the named `postgres_data` volume at PostgreSQL 18's persistent pa
 
 ## Planned later entities — not implemented
 
-- **Release 0.2:** initially preconfigured trusted MCP connection; any optional tool execution metadata is non-secret and bounded. No arbitrary user-defined server table is required just to demonstrate one connection.
+ONK-005 uses server environment configuration and a process-local discovery snapshot; it adds no integration/credential table, message metadata or migration. Its enabled state deliberately resets on server restart. Conversation persistence is unchanged.
+
+- **Release 0.2 / ONK-006 planned:** any optional tool execution metadata is non-secret and bounded. No arbitrary user-defined server table is required for the initial fixed connection.
 - **Release 0.3:** `Skill` and conversation/tool-binding relationships in additive Prisma migrations. Never store plaintext access tokens in JSONB.
 - **Release 0.4:** `PracticeQuiz`, `QuizQuestion`, `QuizSubmission` (exact schema defined by ONK-009–010) with server-private answer keys. Optional clarification prompts reuse the existing conversation lifecycle or a separately validated additive model.
 
-These entities are **planned**. The current Prisma schema and 0.1 migrations have not been changed by release planning.
+These entities are **planned**. Neither release planning nor ONK-005 changes the Prisma schema or existing migrations.

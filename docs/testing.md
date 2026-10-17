@@ -1,4 +1,4 @@
-# Verification approach — Release 0.1
+# Verification approach — chat and MCP discovery
 
 ONK-001–004 include Vitest checks for database configuration, health, model allowlisting, the real AI SDK/OpenRouter adapter with mocked fetch, client context and safe content rendering; `npm run test`, `npm run lint`, `npm run typecheck` and `npm run build` provide local foundation checks. See [Local development](development.md) and the release [verification](releases/release-0.1-mvp/verification.md) for actual commands and outcomes. The [GitHub Actions workflow](../.github/workflows/ci.yaml) runs lint, types, unit tests, migrations, isolated PostgreSQL tests, build and mocked Chromium journeys. A workflow file is not evidence of a hosted run; see verification for that boundary.
 
@@ -58,3 +58,11 @@ E2E_BASE_URL=http://127.0.0.1:33040 E2E_PERSISTENCE=1 npm run test:browser
 ```
 
 Eight additional journeys in both viewports use the real Next.js routes, Prisma and PostgreSQL: create/reload/resume/copy/reopen/delete, Stop/reload/regenerate with stable IDs, and failed-provider history without duplicate turns. They delete only their own fixture chats. The four live-preview journeys hold a real mocked-provider HTTP stream open, assert previews while the DB answer is still pending, then Stop/reload and compare exact original text. Another journey checks earlier user/assistant context at the provider boundary after reload and switching conversations. The preload imports the adjacent `streaming.ts` fixture; container overrides must mount the fixtures directory together. Without `E2E_PERSISTENCE=1` these sixteen cases are explicitly skipped. CI uses this guarded setup without any real OpenRouter secret. The synthetic provider does not prove live connectivity, compatibility, billing or hosted CI execution.
+
+## ONK-005 MCP discovery
+
+`npm test -- tests/mcp-config.test.ts tests/mcp-network.test.ts tests/mcp.test.ts tests/mcp-api.test.ts` runs deterministic configuration/address, socket/DNS, real-SDK fake HTTP and real-route tests. Default test setup clears MCP settings and disallows unmocked fetches. MCP tests substitute only the transport dependency or native socket/DNS boundary; they make no live Context7 request.
+
+The four integration browser scenarios in `tests/browser/integrations.spec.ts` run in both viewports: missing configuration, failed discovery/retry/disable, cancellation with late results, and a real-route/SDK/fake-HTTP journey. The last scenario requires `E2E_MCP=1` and the guarded `tests/fixtures/mcp-mock.mjs` preload. It requires `OPENNOOK_TEST_MCP=1`, the literal synthetic fixture key and a test-named database; it substitutes HTTPS/DNS only inside the test process with a loopback fake server on port 3001. Never preload it on the normal stack. The fixture counter proves no automatic/repeated discovery or tool execution.
+
+CI combines that preload with the existing OpenRouter fixture and runs all 44 browser cases using fake credentials. See [MCP configuration](mcp-configuration.md) for policy/transport limits and [Release 0.2 verification](releases/release-0.2-mcp-tool-integration/verification.md) for actual outcomes and live-test boundaries.

@@ -7,9 +7,9 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16.4.2-1A1A1A?style=flat-square)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-server%20API-6C5CE7?style=flat-square)
 
-**OpenNook AI** is a **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. **The next planned releases** cover **trusted read-only MCP tools (0.2)**, **custom, manually activated skills (0.3)** and **graded practice quizzes plus ungraded chat clarifications (0.4)**.
+**OpenNook AI** is a **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. **Context7 tool discovery (ONK-005)** is also available locally. Controlled MCP tool execution (ONK-006), **custom, manually activated skills (0.3)** and **graded practice quizzes plus ungraded chat clarifications (0.4)** remain planned.
 
-> **Repository status: Release 0.1 implemented locally; Releases 0.2–0.4 planned only.** The current Compose stack includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL history. Hosted GitHub Actions checks passed for the committed Release 0.1 baseline; real provider connectivity remains unverified. The brand metadata/visible About update was added separately after the MVP. Read the [Release 0.1 verification](docs/releases/release-0.1-mvp/verification.md) before describing any tests as passed.
+> **Repository status: Release 0.1 and ONK-005 discovery implemented locally; remaining stories planned.** The current Compose stack includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL history. Hosted GitHub Actions checks passed for the committed Release 0.1 baseline; real provider connectivity remains unverified. The brand metadata/visible About update was added separately after the MVP. See [Release 0.1 verification](docs/releases/release-0.1-mvp/verification.md) and the separate [ONK-005 evidence](docs/releases/release-0.2-mcp-tool-integration/verification.md) for actual checks; live Context7 compatibility remains unverified.
 
 ## Release 0.1 — AI Chat MVP
 
@@ -21,6 +21,10 @@
 - **Quality:** deterministic tests, browser smoke tests, CI, explicit empty/error states, and safe rendering of model-generated content.
 
 **Not included in Release 0.1:** runtime MCP, tool calling, custom user skills, quizzes, chat clarification forms, image uploads, accounts, public multi-user hosting, RAG or a separate NestJS API. **Story plans for 0.2–0.4 do not implement these features.**
+
+## MCP discovery — ONK-005
+
+The **Integrations** panel can explicitly enable or disable one server-configured Context7 connection and display its filtered read-only tools. It is disabled by default; page loads and status refreshes never contact Context7. Discovery does not execute tools or send chat content. See [MCP configuration](docs/mcp-configuration.md) for the server variables, fixed destination and limits.
 
 ## How it works
 
@@ -124,14 +128,14 @@ For a public deployment, **do not reuse this unauthenticated demo configuration*
 
 ## Roadmap and development guides
 
-**Release 0.1 is implemented locally.** Releases **0.2 (MCP), 0.3 (Skills) and 0.4 (Quizzes)** have explicit planned story files and acceptance criteria; none of the new functionality is implemented or tested. **Every story still requires separate implementation and commit approval.**
+**Release 0.1 and ONK-005 discovery are implemented locally.** ONK-006 model tool execution, **0.3 (Skills)** and **0.4 (Quizzes)** have planned story files and acceptance criteria; their runtime features are not implemented. **Every story still requires separate implementation and commit approval.**
 
 | Document | Purpose |
 | --- | --- |
 | [Roadmap](docs/roadmap.md) | Delivered MVP and the three planned releases |
 | [Release 0.1](docs/releases/release-0.1-mvp/README.md) | MVP story order and implementation status |
 | [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual 0.1 commands and observed results; not repeated for planned releases |
-| [Release 0.2 — MCP](docs/releases/release-0.2-mcp-tool-integration/README.md) | ONK-005–006, planned only; verification not run |
+| [Release 0.2 — MCP](docs/releases/release-0.2-mcp-tool-integration/README.md) | ONK-005 discovery verified locally; ONK-006 planned |
 | [Release 0.3 — Skills](docs/releases/release-0.3-custom-skills/README.md) | ONK-007–008, planned only; verification not run |
 | [Release 0.4 — Quizzes](docs/releases/release-0.4-interactive-quizzes/README.md) | ONK-009–011, planned only; graded practice vs ungraded clarifications |
 | [Local development](docs/development.md) | Current foundation versions, Compose and native setup |
@@ -139,7 +143,8 @@ For a public deployment, **do not reuse this unauthenticated demo configuration*
 | [Model configuration](docs/model-configuration.md) | Allowlisted OpenRouter models and secrets |
 | [Testing](docs/testing.md) | Unit/renderer/browser checks without billable provider calls |
 | [Rich rendering](docs/rendering.md) | Supported Markdown, math, Mermaid and Vega-Lite syntax and safety limits |
-| [MCP and Skills plan](docs/extensions.md) | Planned tool/client and runtime skills architecture, not implemented |
+| [MCP and Skills](docs/extensions.md) | Implemented discovery and planned execution/Skills architecture |
+| [MCP configuration](docs/mcp-configuration.md) | Context7 setup, explicit consent, transport and security limits |
 | [Quiz and clarifications plan](docs/quizzes.md) | Single/multi-question UIs; practice grading vs chat follow-ups |
 | [Brand metadata](docs/branding.md) | Presentational identity, optional local icons and poster |
 | [Future ideas](docs/future.md) | Only unplanned options without story acceptance criteria |

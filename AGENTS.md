@@ -2,9 +2,9 @@
 
 ## Current repository status
 
-**OpenNook AI Release 0.1 (ONK-001–004) is implemented for local use.** The committed Release 0.1 baseline has a verified passing hosted CI run; live-provider connectivity remains unverified. Consult release verification for historical and current working-tree checks. **Releases 0.2 (ONK-005–006), 0.3 (ONK-007–008) and 0.4 (ONK-009–011) are documented as Planned, not implemented.** Do not claim them as working without separate verification. The user explicitly authorized this documentation update and an independent, small brand-metadata UI integration.
+**OpenNook AI Release 0.1 (ONK-001–004) is implemented for local use.** The committed Release 0.1 baseline has a verified passing hosted CI run; live-provider connectivity remains unverified. Consult release verification for historical and current working-tree checks. **ONK-005 adds locally verified Context7 discovery; ONK-006 and Releases 0.3–0.4 remain Planned.** Discovery uses explicit server configuration and user enablement, without model tool execution. Consult Release 0.2 verification; live Context7 and the updated hosted workflow are not verified.
 
-The delivered MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma history and safe rich content rendering. Docker Compose runs `web` and `db`. Do not introduce an independent backend, Nx/Turborepo or MongoDB. MCP/Skills/Quiz runtime features are **planned later story scopes only**.
+The delivered MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma history and safe rich content rendering. Docker Compose runs `web` and `db`. Do not introduce an independent backend, Nx/Turborepo or MongoDB. ONK-005 MCP discovery is implemented; model tool execution, runtime Skills and quizzes remain separately approved future scopes.
 
 ## Minimal context and skill loading
 
@@ -21,7 +21,7 @@ The delivered MVP is **one Next.js full-stack application** with React, assistan
 - **Database:** Prisma + PostgreSQL in the self-hosted stack. Persist conversation/message data and minimal model metadata; do not store plaintext keys or make hidden external network calls from model-generated content.
 - **Rendering:** treat AI content and diagram specifications as untrusted input. Render Markdown safely without raw HTML/script execution; constrain Mermaid and Vega-Lite, disable unsafe KaTeX trust/external resources, and test hostile content.
 - **Security:** Release 0.1 is single-user, localhost-only. Do **not** recommend public hosting before auth, isolation, request limits, cost controls and secure secrets management exist. Never commit `.env`.
-- **MCP / runtime skills (0.2–0.3 planned):** no arbitrary MCP URLs, unrestricted requests, executable skill files or model-granted permissions. A runtime skill is *user guidance*, not a Codex developer skill; the backend enforces tool allowlists and approval for writes. No release planning grants execution authority.
+- **MCP / runtime skills (discovery implemented; ONK-006–008 planned):** no arbitrary MCP URLs, unrestricted requests, executable skill files or model-granted permissions. A runtime skill is *user guidance*, not a Codex developer skill; the backend enforces tool allowlists and approval for writes. No release planning grants execution authority.
 - **Quizzes / clarifications (0.4 planned):** graded practice quizzes use server-side deterministic single/multi-choice matching and private answer keys. Model-generated clarification questions are **ungraded**, never authorize tool calls, and only resume chat after explicit user input.
 - **Brand metadata:** use [`public/brand/branding.json`](public/brand/branding.json) for displayed identity and optional assets under `public/brand/assets/`. Keep source SPDX, full `LICENSE`, legal README text, API secrets and versioning **independent** of brand settings.
 - **Deployment:** one `web` and one persistent `db` Docker service. OpenRouter is an external HTTPS API; no Ollama or Langfuse service is part of this design.
@@ -52,4 +52,4 @@ Comments/docstrings explain **why**, not obvious code behavior. Prefer focused t
 
 ## Scope and evidence
 
-The Release 0.1 stories are implemented with existing evidence. ONK-005–011 now define **planned** acceptance criteria for Releases 0.2–0.4 after a direct user request; they are **not authorization to implement those releases**. `docs/future.md` contains unscheduled ideas only. Keep implementation within a separately approved story; don't invent results or create new agents without need.
+The Release 0.1 stories are implemented with existing evidence. ONK-005 has its own local discovery evidence. ONK-006–011 remain **planned** acceptance criteria for Releases 0.2–0.4; they are **not authorization to implement those stories**. `docs/future.md` contains unscheduled ideas only. Keep implementation within a separately approved story; don't invent results or create new agents without need.

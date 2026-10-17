@@ -2,7 +2,7 @@
 
 ## Status
 
-**Planned — not implemented.** This release contains approved planning documents and testable acceptance criteria, **not** working MCP/Skills/Quiz features. One story is implemented only after separate, explicit user approval. Do not rewrite Release 0.1 verification as part of planning.
+**Partially implemented locally — ONK-005 complete; ONK-006 Planned.** Context7 discovery, enable/disable controls and bounded read-only metadata are implemented and tested with a fake server. Model tool execution is not implemented. Live Context7 and the updated hosted CI workflow remain Not run. See [configuration](../../mcp-configuration.md) and [verification](verification.md). Release 0.1 evidence is preserved.
 
 ## Goal
 
@@ -16,7 +16,7 @@ Release 0.1 completed. Current **single-user, localhost-only** boundaries remain
 
 | Story | Scope | Status |
 | --- | --- | --- |
-| [ONK-005](stories/ONK-005-trusted-mcp-connection-and-discovery.md) | Trusted MCP Connection & Discovery | Planned |
+| [ONK-005](stories/ONK-005-trusted-mcp-connection-and-discovery.md) | Trusted MCP Connection & Discovery | Implemented locally |
 | [ONK-006](stories/ONK-006-controlled-tool-calling-and-verification.md) | Controlled Tool Calling & Verification | Planned |
 
 ## Guardrails

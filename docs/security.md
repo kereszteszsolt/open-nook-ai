@@ -12,7 +12,13 @@
 - **Persistence:** only safe finish metadata is recorded, incomplete generations retain an explicit status, version checks prevent conflicting writes and expired leases recover abandoned requests. Prompt/answer text is user content and can itself contain sensitive information.
 - **Logs:** application handlers omit raw provider/database errors and chat contents; no chat-content logging is enabled by default.
 
-## Later MCP and custom skill boundaries
+## ONK-005 discovery boundary
+
+Context7 discovery is disabled until explicitly configured and enabled. The server accepts only the fixed HTTPS endpoint and preapproved read-only tool subset. It checks public DNS addresses in the socket lookup, verifies TLS, denies redirects/retries and bounds requests, responses, pagination and total duration. Status reads never contact MCP. Returned names/descriptions are locally defined; remote instructions, schemas, icons and raw errors are omitted. Disable and cancellation revoke pending discovery; cached state resets on server restart. See [MCP configuration](mcp-configuration.md) for exact limits and the fake/live evidence boundary.
+
+No model tools are registered by ONK-005. Discovery does not authorize execution, expose credentials, write conversation data or broaden the localhost-only deployment policy.
+
+## Later MCP execution and custom skill boundaries
 
 These are **design rules, not implemented features**. The backend, not the model or skill text, enforces allowlisted MCP servers and tools, resource access, rate limits and any write approval. Do not accept arbitrary user-entered server URLs with backend network privileges (SSRF risk). Begin with read-only tools and test permission denial. Changes, credential delegation and OAuth flows require new approved stories and threat reviews.
 

@@ -1,4 +1,4 @@
-name: Release 0.1 checks
+name: OpenNook checks
 on:
   push:
   pull_request:
@@ -47,14 +47,15 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Mocked browser journeys
         run: |
-          NODE_OPTIONS="--import=$PWD/tests/fixtures/openrouter-mock.mjs" \
+          NODE_OPTIONS="--import=$PWD/tests/fixtures/openrouter-mock.mjs --import=$PWD/tests/fixtures/mcp-mock.mjs" \
+          OPENNOOK_TEST_MCP=1 MCP_CONTEXT7_URL=https://mcp.context7.com/mcp MCP_CONTEXT7_API_KEY=onk005-test-only-key \
           OPENNOOK_TEST_PROVIDER=1 OPENROUTER_API_KEY=onk004-test-only-key \
           OPENROUTER_MODEL_1=test/model-one \
           node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 33040 > /tmp/open-nook-test.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           node --input-type=module -e 'for(let i=0;i<60;i++){try{const r=await fetch("http://127.0.0.1:33040/api/health");if(r.ok)process.exit(0)}catch{} await new Promise(r=>setTimeout(r,1000))} process.exit(1)'
-          E2E_BASE_URL=http://127.0.0.1:33040 E2E_PERSISTENCE=1 npm run test:browser
+          E2E_BASE_URL=http://127.0.0.1:33040 E2E_PERSISTENCE=1 E2E_MCP=1 npm run test:browser
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: failure()
         with:

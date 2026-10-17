@@ -2,7 +2,7 @@
 
 ## Release 0.1 — AI Chat MVP
 
-**Implemented locally;** existing verification is preserved unchanged. Mocked-provider checks were recorded; live OpenRouter connectivity and hosted CI execution have not been verified.
+**Implemented locally;** existing verification is preserved unchanged. Mocked-provider checks and successful hosted CI for the committed MVP were recorded; live OpenRouter connectivity remains unverified.
 
 | Story | Scope | Status |
 | --- | --- | --- |
@@ -15,14 +15,14 @@
 
 ## Release 0.2 — MCP Tool Integration
 
-**Planned, not implemented.**
+**Partially implemented:** ONK-005 discovery is implemented locally; ONK-006 model tool execution remains Planned. Live Context7 compatibility has not been tested.
 
-| Story | Scope |
-| --- | --- |
-| [ONK-005](releases/release-0.2-mcp-tool-integration/stories/ONK-005-trusted-mcp-connection-and-discovery.md) | Trusted read-only connection, discover and filter tool metadata |
-| [ONK-006](releases/release-0.2-mcp-tool-integration/stories/ONK-006-controlled-tool-calling-and-verification.md) | Bounded model tool-calling with backend-enforced permission checks |
+| Story | Scope | Status |
+| --- | --- | --- |
+| [ONK-005](releases/release-0.2-mcp-tool-integration/stories/ONK-005-trusted-mcp-connection-and-discovery.md) | Trusted read-only connection, discover and filter tool metadata | Implemented locally |
+| [ONK-006](releases/release-0.2-mcp-tool-integration/stories/ONK-006-controlled-tool-calling-and-verification.md) | Bounded model tool-calling with backend-enforced permission checks | Planned |
 
-[Release 0.2](releases/release-0.2-mcp-tool-integration/README.md) · [Verification (not run)](releases/release-0.2-mcp-tool-integration/verification.md)
+[Release 0.2](releases/release-0.2-mcp-tool-integration/README.md) · [Observed verification](releases/release-0.2-mcp-tool-integration/verification.md)
 
 ## Release 0.3 — Custom Skills
 

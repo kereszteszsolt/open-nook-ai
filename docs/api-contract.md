@@ -1,6 +1,6 @@
 # HTTP contracts — local API
 
-Next.js App Router serves uncached, same-origin health, models, chat and saved-conversation routes. Mutations reject an explicitly different Origin; this is not authentication.
+Next.js App Router serves uncached, same-origin health, models, chat, saved-conversation and integration routes. Mutations reject an explicitly different Origin; this is not authentication.
 
 | Endpoint | Purpose | Story / state |
 | --- | --- | --- |
@@ -11,6 +11,10 @@ Next.js App Router serves uncached, same-origin health, models, chat and saved-c
 | `POST /api/conversations` | Create conversation | ONK-004 / implemented |
 | `GET /api/conversations/{id}` | Read ordered messages | ONK-004 / implemented |
 | `DELETE /api/conversations/{id}` | Delete conversation and its messages | ONK-004 / implemented |
+| `GET /api/integrations/context7` | Local cached discovery state; no remote connection | ONK-005 / implemented |
+| `POST /api/integrations/context7` | Explicit enable/discover or disable; no tool execution | ONK-005 / implemented |
+
+Integration requests accept only `{"action":"enable"}` or `{"action":"disable"}`, with a 256-byte JSON body and existing same-origin checks. The server owns endpoint, credentials and allowed tool names. Unconfigured/unavailable/invalid setup returns HTTP 503 with a safe snapshot. See [MCP configuration](mcp-configuration.md) for response fields, states and bounds. Chat request/context contracts below are unchanged; no MCP instruction or tool schema is sent to the model by ONK-005.
 
 ## Model registry
 

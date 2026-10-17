@@ -1,8 +1,10 @@
-# MCP and Custom Skills — planned architecture
+# MCP discovery and planned tool/Skill architecture
 
-**Planning only:** ONK-005–008 are now defined with acceptance criteria in [Release 0.2](releases/release-0.2-mcp-tool-integration/README.md) and [Release 0.3](releases/release-0.3-custom-skills/README.md). Neither release is implemented. Read only the active story when starting implementation.
+**ONK-005 is implemented locally:** one disabled-by-default Context7 integration, explicit enable/disable controls and server-filtered discovery. See [configuration and limits](mcp-configuration.md) and [Release 0.2 evidence](releases/release-0.2-mcp-tool-integration/verification.md). Status reads never contact the remote server. State is process-local; discovery does not write conversations or expose credentials.
 
-## Intended MCP flow
+**ONK-006–008 remain planned:** model tool execution and runtime Skills are defined in [Release 0.2](releases/release-0.2-mcp-tool-integration/README.md) and [Release 0.3](releases/release-0.3-custom-skills/README.md). Discovery does not supply tools or instructions to the current chat model.
+
+## Intended tool-execution flow — ONK-006 planned
 
 1. The local user enables one explicitly configured, trusted, read-only MCP server. No user-entered arbitrary URL or implicit external access.
 2. A server-side client discovers tools and filters them through backend allowlists before exposing names/descriptions to a supported OpenRouter model.

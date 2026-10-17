@@ -36,6 +36,8 @@ Use `.env` for local secrets, ignored by Git. Never put a key in variables prefi
 
 ## Provider test boundaries
 
+Optional Context7 discovery uses separate server-only `MCP_CONTEXT7_*` settings and an explicit enable action; it does not use OpenRouter or chat context. See [MCP configuration](mcp-configuration.md). These settings are not browser model options or permission to execute tools.
+
 Mock requests in CI. Real streaming and model-compatibility smoke tests require an API key, explicit approval and a note in the verification record about model ID, observed behavior and approximate cost if known. Do not infer a successful live provider test from a mocked success.
 
 ## Saved conversations

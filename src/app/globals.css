@@ -128,3 +128,18 @@ th { background: var(--badge); }
 .brand-links { display: flex; flex-direction: column; align-items: start; gap: .4rem; margin-block: .75rem; }
 .brand-links a { color: var(--accent); font-size: .85rem; text-underline-offset: .2em; }
 .brand-copyright { font-size: .7rem !important; }
+.history-toolbar-actions { display: flex; gap: .3rem; align-items: center; margin-left: auto; position: relative; }
+.integration-control { position: static; }
+.integration-control > summary { cursor: pointer; color: var(--muted); padding: .55rem .75rem; border-radius: .5rem; font-size: .85rem; }
+.integration-control > summary:hover { background: var(--badge); }
+.integration-panel { position: absolute; z-index: 11; top: calc(100% + .45rem); right: 0; width: min(24rem, calc(100vw - 2rem)); max-height: min(75svh, 38rem); overflow-y: auto; padding: 1rem; background: var(--panel); border: 1px solid var(--border); border-radius: .75rem; box-shadow: 0 10px 30px #0002; font-size: .8rem; line-height: 1.5; }
+.integration-panel h2 { font-size: 1rem; margin-top: 0; }
+.integration-panel p { color: var(--muted); }
+.integration-panel ul { padding-left: 1.1rem; }
+.integration-panel code { overflow-wrap: anywhere; }
+.integration-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+@media (max-width: 400px) {
+  .history-toolbar { padding-inline: .4rem; }
+  .history-toolbar .quiet-button, .history-toolbar-actions summary { padding: .5rem .4rem; font-size: .8rem; }
+  .history-toolbar-actions { gap: 0; }
+}
