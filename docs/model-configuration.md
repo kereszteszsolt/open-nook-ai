@@ -25,7 +25,7 @@ The initial selection can include Qwen, Llama and Mistral models if they are cur
 
 ## Deployment paths
 
-The `.env.example` database URL uses the hostname `db` for **inside the Compose network**. Native `next dev` outside Docker may require a separate `localhost` database URL. ONK-001 must document both and avoid accidentally publishing credentials.
+The `.env.example` database URL uses the hostname `db` for **inside the Compose network**. Native `next dev` outside Docker uses `127.0.0.1:5433` with the optional `compose.dev.yaml` database port mapping. See [Local development](development.md) for both workflows. No OpenRouter settings are required or consumed by the ONK-001 foundation.
 
 Use `.env` for local secrets, ignored by Git. Never put a key in variables prefixed `NEXT_PUBLIC_`, client components, logging output or a committed config file. A public deployment needs server-side auth, access control, rate limits, budget safeguards and provider data-policy review.
 

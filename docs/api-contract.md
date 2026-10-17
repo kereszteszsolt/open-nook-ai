@@ -1,6 +1,8 @@
-# HTTP contracts — target (not implemented)
+# HTTP contracts — foundation and target MVP
 
 Next.js App Router will serve the API through same-origin Route Handlers. Actual stream format and assistant-ui runtime adapter must match the **pinned AI SDK version** chosen during implementation.
+
+ONK-001 implements only `GET /api/health`: a no-store `200` after a successful PostgreSQL probe, or a generic `503` on failure. See [Local development](development.md). All other endpoints below remain planned.
 
 | Endpoint | Purpose | Story |
 | --- | --- | --- |

@@ -1,6 +1,6 @@
 # PostgreSQL / Prisma data model — target
 
-**Status: Planned.** ONK-001 introduces database connectivity and migrations; ONK-004 implements conversation persistence. No Prisma schema or migrations are included in this baseline.
+**Status: Conversation model planned.** ONK-001 introduces database connectivity, a model-free Prisma schema and an initial migration ledger. The entities below are not implemented; ONK-004 adds conversation models, migrations and persistence.
 
 ```mermaid
 erDiagram

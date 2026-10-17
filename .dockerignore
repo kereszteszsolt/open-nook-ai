@@ -1,0 +1,16 @@
+.git
+.agents
+.codex
+.env
+.env.*
+!.env.example
+node_modules
+.next
+src/generated
+coverage
+test-results
+playwright-report
+*.tsbuildinfo
+*.log
+docs
+README.md

@@ -1,0 +1,51 @@
+/* SPDX-FileCopyrightText: 2026 Keresztes Zsolt <https://kereszteszsolt.hu>
+ * SPDX-License-Identifier: Apache-2.0 */
+
+:root {
+  color-scheme: light dark;
+  --background: #f7f8f5;
+  --foreground: #202b24;
+  --muted: #58665b;
+  --accent: #376545;
+  --badge: #e8efe5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  width: min(100%, 76rem);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.wordmark { font-size: 1.15rem; font-weight: 650; }
+.wordmark > span { color: var(--accent); margin-right: 0.5rem; }
+section { margin-block: auto; padding-block: 2rem; max-width: 48rem; }
+.eyebrow { color: var(--accent); font-weight: 600; }
+h1 { margin-block: 1.5rem; font-size: clamp(2.1rem, 6vw, 4.5rem); line-height: 1.12; letter-spacing: -0.045em; }
+.description { max-width: 34rem; color: var(--muted); font-size: 1.1rem; line-height: 1.75; }
+.status { display: inline-flex; align-items: center; gap: 0.6rem; margin-top: 1.5rem; padding: 0.65rem 0.9rem; border-radius: 2rem; background: var(--badge); color: var(--accent); font-size: 0.85rem; }
+.status > span { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+footer { color: var(--muted); font-size: 0.85rem; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #17201b;
+    --foreground: #edf2ec;
+    --muted: #b2c0b5;
+    --accent: #afd0b2;
+    --badge: #273b2d;
+  }
+}

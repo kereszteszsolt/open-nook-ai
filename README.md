@@ -3,13 +3,13 @@
 > **A self-hosted, extensible AI assistant — starting with a simple, capable chat.**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-D22128?style=flat-square)](LICENSE)
-![Status: Planned MVP](https://img.shields.io/badge/status-planned%20MVP-64748b?style=flat-square)
-![Next.js](https://img.shields.io/badge/Next.js-planned-1A1A1A?style=flat-square)
+![Status: MVP in development](https://img.shields.io/badge/status-MVP%20in%20development-64748b?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-16.4.2-1A1A1A?style=flat-square)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-planned-6C5CE7?style=flat-square)
 
 **OpenNook AI** is a planned **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. Later phases may add **read-only MCP tools** and **custom, explicitly activated skills**.
 
-> **Repository status: documentation-only baseline.** Release 0.1 is **Planned**. No Next.js app, database migration, executable Compose stack, chat UI, or working AI integration exists in this ZIP. The diagrams and API contracts describe intended behavior. Implementation is performed later, one approved story at a time.
+> **Repository status: ONK-001 local foundation.** Release 0.1 is **in development**. A Next.js placeholder, database readiness endpoint, Prisma migration foundation and local Compose stack are included. Chat, OpenRouter streaming, rich rendering and conversation history remain planned. The diagrams describe the target MVP; actual checks are recorded in [release verification](docs/releases/release-0.1-mvp/verification.md).
 
 ## Planned Release 0.1 — AI Chat MVP
 
@@ -84,7 +84,7 @@ More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · 
 | Deployment | Docker Compose (`web`, `db`) |
 | Delivery | GitHub Actions CI |
 
-Package compatibility and actual versions will be pinned in **ONK-001/003** after verifying the supported `assistant-ui` / AI SDK adapter. No Streamlit, experimental `streamUI` RSC API, separate NestJS backend or monorepo build framework is required.
+The foundation pins Node.js 24.20.0, Next.js 16.4.2, React 19.3.1, TypeScript 5.9.3 and Prisma 7.10.1. The compatible assistant-ui / AI SDK adapter will be selected and tested in ONK-002/003. See [Local development](docs/development.md) for the exact foundation stack and commands.
 
 ## Model configuration (planned)
 
@@ -101,17 +101,17 @@ OPENROUTER_MODEL_5=
 
 Only non-empty, unique, configured IDs are offered. If the key or all slots are missing, the app explains what must be configured. Select currently available, compatible Qwen, Llama or Mistral models yourself; this baseline does not assume specific model names or prices. See [Model configuration](docs/model-configuration.md).
 
-## Local setup (after implementation)
+## Local setup — ONK-001 foundation
 
-When Release 0.1 is finished, local deployment is intended to be:
+To run the current placeholder and database readiness endpoint locally:
 
 ```bash
 cp .env.example .env
-# Configure your local PostgreSQL password, OpenRouter key and allowed model IDs.
-docker compose up --build
+# Replace the PostgreSQL password in POSTGRES_PASSWORD and DATABASE_URL.
+docker compose up --build --wait
 ```
 
-The website will be available at `http://localhost:3000` if ONK-001 retains the documented default. **These commands do not start anything yet:** this baseline intentionally contains no Compose service definition, `package.json`, Prisma migrations or application source code. The real commands and smoke checks will be added and verified during the stories.
+Open `http://localhost:3000`; set `APP_PORT` if that port is occupied. `GET /api/health` reports readiness after a successful database query. OpenRouter settings may remain empty: this foundation makes no model calls. See [Local development](docs/development.md) for native Next.js setup, migrations and checks.
 
 For a public deployment, **do not reuse this unauthenticated demo configuration**. Add authentication, per-user data isolation, limits and cost protection first.
 
@@ -122,8 +122,9 @@ Only **Release 0.1** has committed story acceptance criteria. Future MCP and Ski
 | Document | Purpose |
 | --- | --- |
 | [Roadmap](docs/roadmap.md) | MVP story order and candidate later phases |
-| [Release 0.1](docs/releases/release-0.1-mvp/README.md) | Four planned, verifiable stories |
-| [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual proof once work starts; currently Not run |
+| [Release 0.1](docs/releases/release-0.1-mvp/README.md) | MVP story order and implementation status |
+| [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual commands, observed results and remaining checks |
+| [Local development](docs/development.md) | Current foundation versions, Compose and native setup |
 | [API contract](docs/api-contract.md) | Proposed models, chat streaming and conversation routes |
 | [Model configuration](docs/model-configuration.md) | Allowlisted OpenRouter models and secrets |
 | [Testing](docs/testing.md) | Test strategy without billable CI calls |

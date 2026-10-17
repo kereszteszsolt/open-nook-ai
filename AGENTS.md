@@ -2,7 +2,7 @@
 
 ## Current repository status
 
-**OpenNook AI is documentation-only.** Only Release 0.1 (`ONK-001`–`ONK-004`) has approved-planning-level story specifications. Every story is `Planned`, and no app, Next.js scaffold, database migration, functional CI, or runnable Compose stack exists yet. Do not claim implemented behavior or verification before actually completing it.
+**OpenNook AI has an ONK-001 local foundation.** Release 0.1 (`ONK-001`–`ONK-004`) is in development: Next.js, database readiness, Prisma migration infrastructure and a local Compose stack exist. Consult the story status and release verification for actual evidence. ONK-002–004 remain `Planned`; there is no OpenRouter integration, chat UI, conversation persistence or functional CI yet. Do not claim implemented behavior or verification before actually completing it.
 
 The agreed MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma conversation history and safe rich content rendering. Docker Compose will run `web` and `db`. Do not introduce an independent backend, Nx/Turborepo, MongoDB, MCP runtime, agents, user-created skills, or auth flows into Release 0.1.
 
@@ -50,4 +50,4 @@ Comments/docstrings explain **why**, not obvious code behavior. Prefer focused t
 
 ## Scope and evidence
 
-Only the Release 0.1 story files define committed acceptance criteria. `docs/roadmap.md` and `docs/future.md` describe candidate later releases; **they are not implementation authorization**. Do not create later story files or new agents without a user request. The repo baseline deliberately has no executable app source code.
+Only the Release 0.1 story files define committed acceptance criteria. `docs/roadmap.md` and `docs/future.md` describe candidate later releases; **they are not implementation authorization**. Do not create later story files or new agents without a user request. Keep implementation changes within the single approved story.

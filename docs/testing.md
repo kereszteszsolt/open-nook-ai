@@ -1,6 +1,6 @@
-# Verification approach — planned
+# Verification approach — foundation and planned MVP
 
-There is no application, test runner or executable CI workflow in this documentation-only baseline. This page lists **expected evidence once each approved story is implemented**.
+ONK-001 introduces Vitest checks for database configuration and the health endpoint; `npm run test`, `npm run lint`, `npm run typecheck` and `npm run build` provide local foundation checks. See [Local development](development.md) and the release [verification](releases/release-0.1-mvp/verification.md) for actual commands and outcomes. There is no CI workflow yet. The table below describes evidence for the full MVP as later approved stories are implemented.
 
 | Layer | Planned verification |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Architecture — target design for Release 0.1
 
-**Status: Planned.** This describes the architecture Codex should implement in the four MVP stories; none of the services are running in this baseline.
+**Status: MVP target; ONK-001 foundation implemented.** Next.js, database readiness and the local PostgreSQL/Compose foundation exist. The chat, provider and conversation flows below remain planned. See [Local development](development.md) for the current runtime.
 
 ## Boundaries
 
@@ -58,7 +58,7 @@ Release 0.1 is for local, single-user use only. Bind the web port to localhost i
 
 ## Version compatibility checkpoint
 
-During ONK-001/003, pin mutually compatible Next.js, React, AI SDK, assistant-ui, Prisma and Node.js versions and document the tested configuration. Avoid experimental RSC `streamUI` and optional cloud-backed assistant-ui services; **assistant-ui components and the AI SDK run with your own Next.js server**.
+ONK-001 pins the Next.js, React, Prisma, TypeScript and Node.js foundation; see [Local development](development.md). During ONK-002/003, verify and pin compatible AI SDK and assistant-ui versions. Avoid experimental RSC `streamUI` and optional cloud-backed assistant-ui services; **assistant-ui components and the AI SDK run with your own Next.js server**.
 
 ## See also
 

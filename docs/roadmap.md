@@ -2,11 +2,11 @@
 
 ## Release 0.1 — AI Chat MVP
 
-**Planned.** This is the only release with defined story files and acceptance criteria.
+**In progress.** This is the only release with defined story files and acceptance criteria.
 
 | Story | Scope | Status |
 | --- | --- | --- |
-| [ONK-001](releases/release-0.1-mvp/stories/ONK-001-nextjs-foundation-and-database.md) | Next.js foundation, config, Prisma/PostgreSQL, Docker | Planned |
+| [ONK-001](releases/release-0.1-mvp/stories/ONK-001-nextjs-foundation-and-database.md) | Next.js foundation, config, Prisma/PostgreSQL, Docker | Implemented |
 | [ONK-002](releases/release-0.1-mvp/stories/ONK-002-openrouter-streaming-model-selection.md) | OpenRouter model allowlist and streaming API | Planned |
 | [ONK-003](releases/release-0.1-mvp/stories/ONK-003-assistant-ui-rich-rendering.md) | assistant-ui chat, controls and safe rich rendering | Planned |
 | [ONK-004](releases/release-0.1-mvp/stories/ONK-004-conversation-persistence-and-verification.md) | Conversation management, browser/CI/Compose verification and docs | Planned |

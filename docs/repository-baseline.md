@@ -1,19 +1,20 @@
-# Baseline inventory — planned, not implemented
+# Repository inventory — ONK-001 foundation
 
-This snapshot is intentionally **documentation and Codex configuration only**. It has no `package.json`, Next.js source, generated components, Prisma schema, Compose stack or GitHub Actions workflow. Their creation belongs to the active Release 0.1 stories and requires separate user approval.
+The original documentation baseline is extended by the approved ONK-001 local foundation. Release 0.1 is still in development; the current story and [verification](releases/release-0.1-mvp/verification.md) determine what is implemented and tested.
 
 ## Included now
 
-- `README.md`, `LICENSE`, `.env.example`, `.gitignore`, `.editorconfig`, `AGENTS.md`.
-- Two focused `.agents/skills/*/SKILL.md` files and one optional `.codex/agents/implementation-worker.toml`.
-- Technical architecture, streaming/API contract, data model, model config, safety/testing docs, roadmap and story workflow.
-- Four `ONK-*` story files with unchecked acceptance criteria and an empty verification record.
-- A copied image for the existing Ways to Support section.
+- `README.md`, `LICENSE`, `.env.example`, `.gitignore`, `.editorconfig`, `AGENTS.md` and the existing Codex skills/optional worker configuration.
+- A pinned Next.js App Router / React / TypeScript project, `package.json`, npm lockfile and `.nvmrc`.
+- A responsive placeholder, server-only Prisma connection and `GET /api/health` database readiness route.
+- Prisma 7 configuration, a model-free schema and initial migration infrastructure without conversation tables.
+- Dockerfile, `.dockerignore`, `compose.yaml` with `web` and persistent `db`, plus an optional native-development database port override.
+- Environment validation, focused Vitest tests, lint/typecheck/build commands and [local development instructions](development.md).
+- Technical target docs, four release stories, actual verification evidence and the existing Ways to Support image.
 
-## Intentionally omitted
+## Not implemented
 
-- App/UI source, `package.json`, lockfiles, Next.js scaffold, Prisma files/migrations, Dockerfile, Compose YAML, runtime `.env`, screenshots, CI workflows.
-- OpenRouter secret or model IDs assumed to be available without configuration.
-- MCP server connections, tool permissions and application-user Skills implementation.
+- OpenRouter provider/model routes or streaming, assistant-ui chat, rich renderers, conversation tables/CRUD, Playwright project tests and GitHub Actions.
+- MCP runtime, tool permissions, application-user skills, authentication or public hosting.
 
-Read [AGENTS.md](../AGENTS.md) and [Release 0.1](releases/release-0.1-mvp/README.md) before starting. This inventory should be refreshed as the first story introduces actual files.
+Generated Prisma Client, Next.js output, local `.env` and installed dependencies are not committed. Read [AGENTS.md](../AGENTS.md) and [Release 0.1](releases/release-0.1-mvp/README.md) before starting another story.
