@@ -2,7 +2,7 @@
 
 ## Status
 
-**Implemented locally — ONK-001–004.** The single Next.js app includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL conversation CRUD/history. Local mock/API/database/browser/Compose checks passed; GitHub Actions is configured but a hosted run and live OpenRouter connectivity are **Not run**. No publication or push is implied. See [verification.md](verification.md) for actual evidence.
+**Implemented locally — ONK-001–004.** The single Next.js app includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL conversation CRUD/history. Local mock/API/database/browser/Compose checks passed. Hosted GitHub Actions checks passed for committed baseline `79c88bd` and main merge `d80e039`; the current uncommitted branding update was rechecked locally. Live OpenRouter connectivity remains **Not run**. No publication or push is implied. See [verification.md](verification.md) for actual evidence.
 
 ## Goal
 

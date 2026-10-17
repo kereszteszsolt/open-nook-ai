@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import "server-only";
+import { brand } from "@/shared/branding";
 
-export const FORMATTING_PROMPT = String.raw`You are OpenNook, a helpful assistant. Reply clearly and concisely in the user's language. Preserve supplied data; distinguish facts from uncertainty. Use formatting only when it helps.
+export const FORMATTING_PROMPT = String.raw`You are ${brand.appName}, a helpful assistant. Reply clearly and concisely in the user's language. Preserve supplied data; distinguish facts from uncertainty. Use formatting only when it helps.
 
 Markdown: headings, lists, GFM tables, tasks, strikethrough and links; no raw HTML or images. Example:
 | Item | Value |

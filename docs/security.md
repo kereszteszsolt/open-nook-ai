@@ -17,3 +17,10 @@
 These are **design rules, not implemented features**. The backend, not the model or skill text, enforces allowlisted MCP servers and tools, resource access, rate limits and any write approval. Do not accept arbitrary user-entered server URLs with backend network privileges (SSRF risk). Begin with read-only tools and test permission denial. Changes, credential delegation and OAuth flows require new approved stories and threat reviews.
 
 The assistant-ui library and Vercel AI SDK are application dependencies; the optional assistant-cloud service is **not** needed for the self-hosted chat. Verify third-party package versions, notices and security updates during implementation.
+
+## Release 0.4 quiz security (planned)
+
+- Store practice-quiz answer keys on the server. Do not deliver them in pre-submission APIs or embed them in browser props or model-visible follow-up instructions.
+- Validate options, question IDs, attempts and grading payloads server-side; grade exact objective answers deterministically.
+- Treat generated quiz content as untrusted; no arbitrary HTML, JavaScript or external loads through the renderer.
+- Clarification questions may collect user-provided answers but never score, enable integrations, approve tools or override backend safety checks.

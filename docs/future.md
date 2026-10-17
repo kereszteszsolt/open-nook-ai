@@ -1,12 +1,13 @@
 # Future ideas — not planned work
 
-The following possibilities have **no approved stories or acceptance criteria**:
+The following are **uncommitted ideas**, without story files or acceptance criteria:
 
-- **Multimodal Vision:** attach an image and ask a supported vision model to interpret it.
-- **Model Comparison:** compare two permitted OpenRouter model responses in a dedicated view.
-- **Public Multi-user Mode:** authentication, isolated chat histories, usage quotas and billing safeguards.
-- **Additional Integrations:** carefully reviewed API/OAuth connections beyond an initial read-only MCP example.
-- **Automatic Skill Suggestions:** recommend an existing skill without granting it tools or enabling it without confirmation.
-- **Import / Export:** download or restore chats in an explicit format after checking privacy implications.
+- **Multimodal Vision:** attach an image to chat and use a supported OpenRouter vision model.
+- **Model Comparison:** show two permitted model outputs in parallel.
+- **Public Multi-user Mode:** authentication, chat isolation, quotas and cost protection before deployment.
+- **Additional Integrations:** selected external API/OAuth integrations beyond the first trusted MCP example.
+- **Automatic Skill Suggestions:** recommend skills without silently enabling tools or changing permissions.
+- **Import / Export:** portable chat/quiz backups with privacy checks.
+- **Free-text Practice Evaluation:** optional AI feedback with explicit uncertainty, never high-stakes authoritative grading.
 
-Potential MCP and Skills phase names live in [roadmap.md](roadmap.md); they are **uncommitted candidates**, not authorization to create them now.
+The planned and scoped work for MCP, Skills and graded practice quizzes is in [roadmap.md](roadmap.md); **do not duplicate it as future ideas**. Even planned release stories require explicit implementation approval.

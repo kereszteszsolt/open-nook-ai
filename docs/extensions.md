@@ -1,40 +1,41 @@
-# Later MCP + custom Skills — high-level concept only
+# MCP and Custom Skills — planned architecture
 
-**Not included in Release 0.1.** No MCP connection, runtime skill, permission editor or new database table exists in this repository baseline. This document records boundaries for later discussion, not acceptance criteria or implementation authorization.
+**Planning only:** ONK-005–008 are now defined with acceptance criteria in [Release 0.2](releases/release-0.2-mcp-tool-integration/README.md) and [Release 0.3](releases/release-0.3-custom-skills/README.md). Neither release is implemented. Read only the active story when starting implementation.
 
-## Intended behavior
+## Intended MCP flow
 
-1. A local user enables **one trusted, read-only MCP connection**, initially with a predefined server/transport rather than arbitrary pasted URLs.
-2. The app discovers and filters available tools, exposing **only the backend-allowed tools** to a tool-capable OpenRouter model.
-3. The user may later create a custom **Skill**: a short set of instructions with optional allowed-tool bindings.
-4. The user manually activates a skill for a conversation; its instructions are included without granting any additional authority.
-5. The AI may suggest a tool call, but the backend verifies permissions and executes it; later write-capable calls require explicit user approval.
+1. The local user enables one explicitly configured, trusted, read-only MCP server. No user-entered arbitrary URL or implicit external access.
+2. A server-side client discovers tools and filters them through backend allowlists before exposing names/descriptions to a supported OpenRouter model.
+3. A model may request allowed tools; the **backend** validates tool name, arguments, limits and conversation authorization again before execution.
+4. UI reports bounded tool invocation results. MCP data is untrusted; no secret or privileged data enters chat logs.
 
 ```mermaid
-flowchart TB
-    User[User enables integration and skill] --> UI[Next.js settings / chat]
-    UI --> Skill[Custom skill instructions]
-    UI --> Perms[Server-enforced tool permissions]
-    Skill -.->|Suggests how to work| Model[Tool-capable LLM]
-    Perms --> Runtime[Server MCP client]
-    Model -->|Requests tool invocation| Runtime
-    Runtime -->|Only authorized calls| Server[Trusted MCP server]
-    Server --> Runtime --> Model
+flowchart LR
+    Browser[Local chat user] --> Route[Next.js backend]
+    Route --> Policy[Connection and tool allowlists]
+    Policy --> Client[MCP client]
+    Client --> Server[Trusted read-only MCP server]
+    Route <--> Model[Tool-capable OpenRouter model]
+    Model -.->|Request tool call| Route
 ```
 
-## Clear separation
+## Intended Skills flow
 
-| Concept | Role | Grants permission? |
+1. Save user-authored **text-only instructions** as app runtime Skill records, never as executable code.
+2. User manually selects a Skill for a conversation; it is not activated automatically or by merely viewing its name.
+3. User assigns a subset of already permitted tools to the active Skill; the **intersection** of all server permissions decides what can actually run.
+4. Skill text can influence the model's workflow but **cannot** grant access to tools, alter system policies or skip approvals.
+
+| Component | Responsibility | Grants permission? |
 | --- | --- | --- |
-| MCP connection | Provides available tool descriptions and execution transport | No, not by itself |
-| Backend permission set | Defines which tools/actions may actually execute | **Yes, enforced by server** |
-| User skill | Suggests how to use permitted tools and format the result | **No** |
-| Model tool calling | Selects a permitted tool during an approved interaction | **No** |
+| MCP connection | Provides tool discovery/execution transport | No |
+| Backend policy | Allows destinations, tools and actions | **Yes** |
+| Skill | User-supplied guidance for a task | No |
+| Model | Suggests a permitted tool based on user input | No |
+| Codex `.agents/skills` | Development guidance while coding | Unrelated to runtime |
 
-Examples such as Penpot depend on a real compatible MCP server, plugins/auth flows and permitted operations. Do not claim Penpot or OAuth compatibility until it has been explicitly implemented and tested.
+## Data and verification
 
-## Candidate data model (future, not committed)
+The additional `Integration`, `Skill` and association tables are **planned only**. Non-secret metadata can use PostgreSQL JSONB; API keys need server-owned secrets or proper encryption. Treat a successful fake-server test differently from a real, separately approved integration smoke test. No Penpot-specific or arbitrary OAuth compatibility is promised.
 
-`Integration`, `Skill`, `SkillIntegration`, `ConversationSkill`, plus optional tool-execution audit records. Only non-secret metadata may go into JSONB. Secrets require encryption or external server-side storage. Real entity names and relationships must be confirmed after the initial MCP experiment.
-
-See [Roadmap](roadmap.md) for provisional ONK-005–008 titles. No actual story files or acceptance criteria exist for these phases.
+See [Security](security.md), [Data model](data-model.md) and the active release stories.

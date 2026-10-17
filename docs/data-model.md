@@ -21,3 +21,11 @@ The application allows 32 stored messages (16 turns) per chat, 8,000 UTF-16 unit
 ## Local persistence
 
 Compose mounts the named `postgres_data` volume at PostgreSQL 18's persistent parent directory. Application and database container restarts/recreation preserve history. Removing a volume is destructive and needs explicit approval. The API is single-user/localhost-only; it provides no authentication or cross-user isolation.
+
+## Planned later entities — not implemented
+
+- **Release 0.2:** initially preconfigured trusted MCP connection; any optional tool execution metadata is non-secret and bounded. No arbitrary user-defined server table is required just to demonstrate one connection.
+- **Release 0.3:** `Skill` and conversation/tool-binding relationships in additive Prisma migrations. Never store plaintext access tokens in JSONB.
+- **Release 0.4:** `PracticeQuiz`, `QuizQuestion`, `QuizSubmission` (exact schema defined by ONK-009–010) with server-private answer keys. Optional clarification prompts reuse the existing conversation lifecycle or a separately validated additive model.
+
+These entities are **planned**. The current Prisma schema and 0.1 migrations have not been changed by release planning.

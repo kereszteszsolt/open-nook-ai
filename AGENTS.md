@@ -2,15 +2,15 @@
 
 ## Current repository status
 
-**OpenNook AI Release 0.1 (ONK-001–004) is implemented for local use.** The current source adds PostgreSQL conversation history and GitHub Actions checks. Consult story status and release verification for actual evidence. Live-provider connectivity and hosted CI execution have not been tested. Do not claim implemented behavior or verification before actually completing it.
+**OpenNook AI Release 0.1 (ONK-001–004) is implemented for local use.** The committed Release 0.1 baseline has a verified passing hosted CI run; live-provider connectivity remains unverified. Consult release verification for historical and current working-tree checks. **Releases 0.2 (ONK-005–006), 0.3 (ONK-007–008) and 0.4 (ONK-009–011) are documented as Planned, not implemented.** Do not claim them as working without separate verification. The user explicitly authorized this documentation update and an independent, small brand-metadata UI integration.
 
-The agreed MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma conversation history and safe rich content rendering. Docker Compose will run `web` and `db`. Do not introduce an independent backend, Nx/Turborepo, MongoDB, MCP runtime, agents, user-created skills, or auth flows into Release 0.1.
+The delivered MVP is **one Next.js full-stack application** with React, assistant-ui, Vercel AI SDK, five configurable OpenRouter model slots, PostgreSQL/Prisma history and safe rich content rendering. Docker Compose runs `web` and `db`. Do not introduce an independent backend, Nx/Turborepo or MongoDB. MCP/Skills/Quiz runtime features are **planned later story scopes only**.
 
 ## Minimal context and skill loading
 
 1. Start with this file and the **one active, user-approved `ONK-*` story**. Read its release README and [workflow](docs/story-workflow.md) only when needed for status or approval gates.
 2. Inspect affected files and their focused tests. Open architecture, API, data model, chat or security documents **only when relevant** to the story; do not preload the whole repository.
-3. Load `.agents/skills/nextjs-ai-chat/SKILL.md` for Next.js/React, AI SDK, assistant-ui, Prisma, rendering or deployment. Load `.agents/skills/mcp-tool-integration/SKILL.md` **only if an explicitly approved later story actually changes MCP/tool execution**.
+3. Load `.agents/skills/nextjs-ai-chat/SKILL.md` for Next.js/React, AI SDK, assistant-ui, Prisma, rich rendering, quizzes or deployment. Load `.agents/skills/mcp-tool-integration/SKILL.md` **only if an approved ONK-005–008 story changes MCP/tool execution or user-authored runtime skills**.
 4. Skills describe **technology-specific engineering practice**, not user stories, business prompts, project roadmap or duplicated acceptance criteria. Those belong to docs and application source.
 
 ## Technical boundaries
@@ -21,7 +21,9 @@ The agreed MVP is **one Next.js full-stack application** with React, assistant-u
 - **Database:** Prisma + PostgreSQL in the self-hosted stack. Persist conversation/message data and minimal model metadata; do not store plaintext keys or make hidden external network calls from model-generated content.
 - **Rendering:** treat AI content and diagram specifications as untrusted input. Render Markdown safely without raw HTML/script execution; constrain Mermaid and Vega-Lite, disable unsafe KaTeX trust/external resources, and test hostile content.
 - **Security:** Release 0.1 is single-user, localhost-only. Do **not** recommend public hosting before auth, isolation, request limits, cost controls and secure secrets management exist. Never commit `.env`.
-- **Future extensions:** no MCP clients, tool calling, arbitrary MCP URLs, executable skill files or dynamic permissions in MVP. Later tools require server-enforced allowlists and approval for changes. Instructions are not permissions.
+- **MCP / runtime skills (0.2–0.3 planned):** no arbitrary MCP URLs, unrestricted requests, executable skill files or model-granted permissions. A runtime skill is *user guidance*, not a Codex developer skill; the backend enforces tool allowlists and approval for writes. No release planning grants execution authority.
+- **Quizzes / clarifications (0.4 planned):** graded practice quizzes use server-side deterministic single/multi-choice matching and private answer keys. Model-generated clarification questions are **ungraded**, never authorize tool calls, and only resume chat after explicit user input.
+- **Brand metadata:** use [`public/brand/branding.json`](public/brand/branding.json) for displayed identity and optional assets under `public/brand/assets/`. Keep source SPDX, full `LICENSE`, legal README text, API secrets and versioning **independent** of brand settings.
 - **Deployment:** one `web` and one persistent `db` Docker service. OpenRouter is an external HTTPS API; no Ollama or Langfuse service is part of this design.
 
 ## Agents and approvals
@@ -50,4 +52,4 @@ Comments/docstrings explain **why**, not obvious code behavior. Prefer focused t
 
 ## Scope and evidence
 
-Only the Release 0.1 story files define committed acceptance criteria. `docs/roadmap.md` and `docs/future.md` describe candidate later releases; **they are not implementation authorization**. Do not create later story files or new agents without a user request. Keep implementation changes within the single approved story.
+The Release 0.1 stories are implemented with existing evidence. ONK-005–011 now define **planned** acceptance criteria for Releases 0.2–0.4 after a direct user request; they are **not authorization to implement those releases**. `docs/future.md` contains unscheduled ideas only. Keep implementation within a separately approved story; don't invent results or create new agents without need.

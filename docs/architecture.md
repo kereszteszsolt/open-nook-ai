@@ -8,7 +8,7 @@ Next.js serves the UI, OpenRouter streaming and PostgreSQL conversation routes i
 - **LLM:** OpenRouter is the only MVP LLM provider. The Vercel AI SDK handles streaming and compatible model requests; the backend only exposes a short allowlist of configured models.
 - **UI:** assistant-ui provides chat interaction primitives. Small custom React renderers add code copy, KaTeX mathematics, Mermaid diagrams and Vega-Lite visualizations.
 - **Persistence:** Prisma + PostgreSQL store conversations and finalized messages. Docker Compose runs `web` and `db` with a persistent DB volume.
-- **Future extensions:** MCP tools and skills are shown as **candidates**; they are **not** part of the MVP data model, tool list or routes.
+- **Future extensions:** MCP tools, runtime skills and quizzes have **planned story files** for Releases 0.2–0.4; they are **not** part of the implemented 0.1 data model, tool list or routes.
 
 ```mermaid
 flowchart LR
@@ -64,3 +64,19 @@ ONK-001 pins the Next.js, React, Prisma, TypeScript and Node.js foundation; see 
 ## See also
 
 [Chat flow](chat-flow.md) · [API contract](api-contract.md) · [Data model](data-model.md) · [Model configuration](model-configuration.md) · [Extensions (future)](extensions.md).
+
+## Planned capabilities, not present in Release 0.1
+
+```mermaid
+flowchart TB
+    App[Existing Next.js chat and persistence]
+    App -.->|Release 0.2 planned| MCP[Trusted MCP client + server permissions]
+    App -.->|Release 0.3 planned| Skills[Manual user skills + allowed tool binding]
+    App -.->|Release 0.4 planned| Quiz[Practice quiz + server grading]
+    App -.->|Release 0.4 planned| Questions[Ungraded clarification UI]
+    Skills -.->|Instructions only| MCP
+    Quiz -.->|Existing OpenRouter API| LLM[Configured LLM]
+    Questions -.-> LLM
+```
+
+Brand identity is described in [branding.md](branding.md); the metadata does not alter legal notices. Release 0.4 details are in [quizzes.md](quizzes.md). None of these planned layers has implementation or verification evidence yet.

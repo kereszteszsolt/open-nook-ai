@@ -9,6 +9,8 @@ import { useAISDKRuntime } from "@assistant-ui/ai-sdk";
 import { AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive, useAuiState } from "@assistant-ui/react";
 import { DefaultChatTransport } from "ai";
 import { z } from "zod";
+import Image from "next/image";
+import { brand } from "@/shared/branding";
 import { CopyButton } from "../rendering/copy-button";
 import { RichText } from "../rendering/rich-text";
 import type { SavedConversation } from "@/shared/conversations";
@@ -32,7 +34,7 @@ function Message() {
   const failed = savedStatus === "failed";
   const pending = savedStatus === "pending" && !streaming;
   return <MessagePrimitive.Root className={`message ${assistant ? "assistant-message" : "user-message"}`}>
-    <div className="message-author">{assistant ? "OpenNook" : "You"}</div>
+    <div className="message-author">{assistant ? brand.appName : "You"}</div>
     {assistant ? <RichText text={text} streaming={streaming} /> : <p className="plain-text">{text}</p>}
     {streaming && <p className="message-state" role="status">Writing…</p>}
     {incomplete && <p className="message-state">Response stopped or incomplete.</p>}
@@ -116,7 +118,9 @@ function Session({ models, model, selectModel, reloadModels, initial, onSaved, o
   useEffect(() => () => { void stop(); }, [stop]);
   return <AssistantRuntimeProvider runtime={runtime}>
     <header className="chat-header">
-      <div className="wordmark"><span aria-hidden="true">◈</span> OpenNook AI <span className="local-badge">Local</span></div>
+      <div className="wordmark">{brand.appIcon
+        ? <Image src={brand.appIcon} alt="" width={24} height={24} unoptimized aria-hidden="true" />
+        : <span aria-hidden="true">◈</span>} {brand.appName} <span className="local-badge">Self-hosted</span></div>
 
     </header>
     <div className="model-bar">
@@ -190,7 +194,7 @@ export function Chat() {
     }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, [refresh]);
-  if (failed) return <main className="connection-state"><h1>Models could not be loaded</h1><p>Check that OpenNook is running, then try again.</p><button type="button" className="primary-button" onClick={() => { setFailed(false); setRefresh((value) => value + 1); }}>Try again</button></main>;
+  if (failed) return <main className="connection-state"><h1>Models could not be loaded</h1><p>Check that {brand.appName} is running, then try again.</p><button type="button" className="primary-button" onClick={() => { setFailed(false); setRefresh((value) => value + 1); }}>Try again</button></main>;
   if (!models) return <main className="connection-state"><p role="status">Loading your models…</p></main>;
   return <History>{({ initial, onSaved, onBusy }) => <Session models={models} model={model} selectModel={(value) => {
     setModel(value);

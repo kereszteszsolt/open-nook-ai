@@ -2,9 +2,56 @@
 
 ## Status
 
-**Release 0.1 implemented for local use.** ONK-001–004 provide the Next.js/PostgreSQL stack, server-only model registry/streaming, assistant-ui and safe rich rendering, saved conversation history and a CI workflow. Local checks use mocked providers; live connectivity and hosted CI execution are **Not run**. Earlier evidence remains historical and describes the code at each story boundary.
+**Release 0.1 implemented for local use.** ONK-001–004 provide the Next.js/PostgreSQL stack, server-only model registry/streaming, assistant-ui and safe rich rendering, saved conversation history and a CI workflow. Local checks use mocked providers; live OpenRouter connectivity remains **Not run**. Hosted CI has passed for the committed MVP baseline and its main merge, as verified below. The latest working-tree checks include the separate branding update; earlier story evidence describes the code at each story boundary.
 
-## Evidence table
+## Working-tree revalidation — 2026-10-17
+
+Reviewed `dev_r0.1` at base commit `79c88bd` together with the existing staged branding/About integration and Release 0.2–0.4 planning documents. Later releases remain **Planned**; this review did not implement or test their runtime acceptance criteria. Existing staged changes were preserved. The table below is the latest local result; the story-completion counts later in this file remain historical.
+
+| Actual command/check | Observed result |
+| --- | --- |
+| `npm test` in the Node Docker wrapper documented below | **181/181 passed in 10 files**, including the three new branding tests; provider fetches mocked/denied |
+| `npm run lint` and `npm run typecheck` in that wrapper | Both passed; zero lint warnings |
+| `npm run db:migrate` then `npm run test:db`, with explicit `DATABASE_URL`/`TEST_DATABASE_URL` on the private review network | Both existing migrations applied; **12/12 PostgreSQL tests passed** |
+| `docker build -t open-nook-ai-release01-review:20261017 .` | Passed, including production compilation, integrated TypeScript and packaging `public/`; image `sha256:291b8f515e54b007d538bff3f1cedc5f0417238cf4251d244e25519c41425778` |
+| Network-disabled `node /image-audit.mjs` in that image, using the existing read-only audit/env mounts | Passed: 103 client JavaScript files; no client private settings/provider code, packaged environment files or test dependencies |
+| Full Chromium command below | **36/36 passed**: 20 API-isolated UI cases and 16 real-route/SDK/Prisma/PostgreSQL cases in desktop/light 1280×900 and mobile/dark 360×800 |
+| `node /checks/branding.mjs` in the same Chromium wrapper | **2/2 viewport checks passed**: title/wordmark, About identity/license/links, protected external links and served `/brand/branding.json` match current settings. No document overflow, page errors, external requests or mutations. Actual desktop/mobile captures visually inspected |
+| `python3 /tmp/open-nook-onk004-check/audit.py` | Passed 132 local links, Markdown fences, source notices, exact dependency/lockfile pins and candidate-file private-value scan |
+| `git -c core.whitespace=cr-at-eol diff HEAD --check` | Initial check flagged two existing Markdown hard-break spaces in `docs/github-metadata.md`; replaced them with equivalent backslash hard breaks, preserving rendered line breaks. Final check passed |
+
+Node checks used the cached `open-nook-ai-onk001-base` wrapper, Node 24.20.0/npm 11.19.0 and the current checkout mounted at `/app`. The database container was `open-nook-ai-release01-review-db`, PostgreSQL 18.6-bookworm, database `open_nook_test_release01_review`, no published DB port, `--tmpfs /var/lib/postgresql` and private `--internal` network `open-nook-ai-release01-review`. No persistent test volume was created. DB commands explicitly selected that test database; the personal database was not a test target.
+
+The separate web container `open-nook-ai-release01-review-web` used the new review image, synthetic test-only settings and a read-only mount of `tests/fixtures` at `/checks`. Its existing guarded preload refuses non-test settings, mocks only the fixed provider endpoint and denies all other fetches. The initial host-port attempt returned `ERR_CONNECTION_REFUSED` while in-container readiness was healthy; that incomplete browser attempt was stopped. The full rerun shared the server's isolated network namespace:
+
+```bash
+docker run --rm --name open-nook-ai-release01-review-browser \
+  --user "$(id -u):$(id -g)" \
+  --network container:open-nook-ai-release01-review-web \
+  --mount type=bind,src="$PWD",dst=/app \
+  --mount type=bind,src=/home/zsolti-wsl/.cache/ms-playwright,dst=/ms-playwright,readonly \
+  --mount type=bind,src=/tmp/open-nook-release01-review,dst=/checks \
+  --workdir /app --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+  --env E2E_BASE_URL=http://127.0.0.1:3000 --env E2E_PERSISTENCE=1 \
+  open-nook-ai-browser-tools npm run test:browser -- --output=/checks/playwright-results-internal
+```
+
+This rerun passed without application/test source corrections. It covers stopped/failed history, regeneration IDs, copy, reload and switched-conversation context, all six Mermaid examples, pie/LaTeX, hostile rendering and partial math/code/Mermaid/Vega previews before completion. Preview cases verify pending DB state and original copied/stored text. The additional branding helper is `/tmp/open-nook-release01-review/branding.mjs`; its captures are `branding-{desktop,mobile}.png` in the same directory. Optional icon/favicon/poster fields are currently empty: custom nonempty asset rendering was **Not run**. Browser accessibility checks remain basic assertions, not a full accessibility audit.
+
+### Hosted CI readback
+
+Read-only GitHub API queries to `GET /repos/kereszteszsolt/open-nook-ai/actions/runs?per_page=5` and the corresponding `/actions/runs/{run_id}/jobs` confirmed:
+
+- [Main CI run 39053389560](https://github.com/kereszteszsolt/open-nook-ai/actions/runs/39053389560): **success**, commit `d80e03990b342630825fc8d39746940cfb4bd525`.
+- [Dev CI run 39053150455](https://github.com/kereszteszsolt/open-nook-ai/actions/runs/39053150455): **success**, commit `79c88bde02f3274310ea073b5793fb6ae3f7efac`.
+
+Both `verify` jobs actually completed lint, typecheck, unit tests, migrations, DB tests, build and mocked browser journeys successfully. Failure-only artifact upload was skipped as configured. Earlier “hosted CI Not run” statements below describe the earlier verification sessions; they are superseded by this readback. These runs cover the committed MVP, not the uncommitted branding/planning changes verified locally in this review.
+
+### Proof boundary
+
+Live OpenRouter connectivity/model compliance/cancellation/billing, a native Windows browser session and public hosting remain **Not run**. This review made zero paid generation requests and did not redeploy the personal app. The normal stack at `http://127.0.0.1:33040` remains on the earlier `sha256:eeaf31269fb104e57834a356747e51dcaf4d03e2c6452d6217188c773da5e254` image; the branding review image above was exercised separately. After the browser checks the isolated test DB contained zero conversations/messages. `docker stop open-nook-ai-release01-review-web open-nook-ai-release01-review-db` and `docker network rm open-nook-ai-release01-review` removed only the temporary environment. Final read-only assertions confirmed exactly the two original healthy OpenNook containers, unchanged normal web image, no test mount/preload and HTTP 200 database readiness. Final diff checks and the 132-link/source/secret audit passed; the pre-existing staged diff SHA-256 remained byte-for-byte identical. No commit or push was made.
+
+## Story-completion evidence table (historical)
 
 | Story | State | Focused checks | Browser / Compose / live model | Notes |
 | --- | --- | --- | --- | --- |

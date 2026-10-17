@@ -26,6 +26,7 @@ ENV NODE_ENV=production \
     CHECKPOINT_DISABLE=1
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/.next ./.next
+COPY --from=builder --chown=node:node /app/public ./public
 COPY --chown=node:node package.json next.config.mjs ./
 COPY --chown=node:node prisma ./prisma
 COPY --chown=node:node prisma.config.ts ./

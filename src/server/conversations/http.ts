@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from "zod";
+import { brand } from "@/shared/branding";
 import { ChatRequestError } from "@/server/ai/request";
 import { ConversationError } from "./errors";
 
@@ -10,7 +11,7 @@ export function sameOrigin(request: Request) {
   const url = new URL(request.url);
   const expected = `${url.protocol}//${request.headers.get("host") ?? url.host}`;
   if (origin && origin !== expected) {
-    throw new ConversationError(403, "invalid_origin", "Send this request from OpenNook.");
+    throw new ConversationError(403, "invalid_origin", `Send this request from ${brand.appName}.`);
   }
 }
 export function conversationId(value: string) {

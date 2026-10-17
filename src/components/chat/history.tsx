@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
+import { brand } from "@/shared/branding";
 import type { ConversationSummary, SavedConversation } from "@/shared/conversations";
 import { loadChat, loadHistory, removeChat, selectChatUrl } from "./history-client";
 
@@ -62,6 +63,22 @@ export function History({ children }: { children: (props: SessionProps) => React
     <div className="history-toolbar">
       <button type="button" className="quiet-button" aria-expanded={visible} aria-controls="saved-history" onClick={() => setVisible((value) => !value)}>History</button>
       <button type="button" className="quiet-button" disabled={busy || loading} onClick={() => { setSelected(undefined); setOpenFailed(false); setSessionKey((key) => key + 1); selectChatUrl(); setVisible(false); }}>New chat</button>
+      <details className="brand-about">
+        <summary>About</summary>
+        <div className="brand-about-panel">
+          <strong>{brand.appName}</strong>
+          <p>Created by {brand.authorName}</p>
+          <div className="brand-links">
+            {brand.appWebsite && <a href={brand.appWebsite} target="_blank" rel="noopener noreferrer">Application website</a>}
+            {brand.appGithubUrl && <a href={brand.appGithubUrl} target="_blank" rel="noopener noreferrer">Project on GitHub</a>}
+            {brand.authorWebsite && <a href={brand.authorWebsite} target="_blank" rel="noopener noreferrer">Author website</a>}
+            {brand.authorGithub && <a href={brand.authorGithub} target="_blank" rel="noopener noreferrer">Author GitHub</a>}
+            {brand.authorWaysToSupportUrl && <a href={brand.authorWaysToSupportUrl} target="_blank" rel="noopener noreferrer">Ways to support</a>}
+            {brand.authorBuyMeACoffeeUrl && <a href={brand.authorBuyMeACoffeeUrl} target="_blank" rel="noopener noreferrer">Buy Me a Coffee</a>}
+          </div>
+          <p className="brand-copyright">© 2026 {brand.authorName} · {brand.license}</p>
+        </div>
+      </details>
     </div>
     <aside id="saved-history" className={`history-panel ${visible ? "history-visible" : ""}`} aria-label="Saved chats">
       <h2>Saved chats</h2>

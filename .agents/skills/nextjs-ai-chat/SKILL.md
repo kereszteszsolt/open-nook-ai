@@ -1,13 +1,13 @@
 ---
 name: nextjs-ai-chat
-description: Use for OpenNook AI Next.js App Router, React, assistant-ui, AI SDK streaming, Zod, Prisma/PostgreSQL, safe rich content rendering, Docker and focused web tests.
+description: Use for OpenNook AI Next.js/React, assistant-ui, AI SDK streaming, Zod, Prisma, safe rich/quiz UI, Docker and focused web tests.
 ---
 
 # Next.js full-stack AI chat engineering
 
 ## Load when
 
-An approved story changes React UI, Next.js Route Handlers, AI SDK, assistant-ui adapters, Prisma persistence, model configuration, rich content rendering, Docker or web tests. Do not load just to plan unrelated future features.
+An approved story changes React UI, Next.js Route Handlers, AI SDK, assistant-ui adapters, Prisma persistence, model configuration, rich content/quiz rendering, Docker or web tests. Do not load just to plan unrelated future features.
 
 ## Technical practices
 
@@ -17,7 +17,8 @@ An approved story changes React UI, Next.js Route Handlers, AI SDK, assistant-ui
 4. Use Prisma migrations for relational data; keep user-facing conversation operations deterministic and testable. Avoid unnecessary database abstractions and provider-wide model discovery.
 5. Sanitize and bound AI-rendered Markdown, code, Mermaid, Vega-Lite and KaTeX. Never execute arbitrary JS or allow model-controlled external URL fetching through rich renderers.
 6. Keep UI accessible with clear loading/error/empty states, copy controls and keyboard support. Prefer small reusable React components; do not rebuild assistant-ui internals unnecessarily.
-7. The local stack is Next.js `web` + PostgreSQL `db`; use a persistent DB volume. No unrelated container or monorepo build system.
+7. For quiz work, distinguish graded practice content from ungraded chat clarification forms. Keep answer keys server-only, validate structured output and grade objective selections deterministically; preserve conversation save/interrupt semantics.
+8. User-visible branding comes from `public/brand/branding.json`, with optional local images and no legal-notice rewrites. The local stack stays Next.js `web` + PostgreSQL `db`; use a persistent volume and no unrelated monorepo system.
 
 ## Verification
 

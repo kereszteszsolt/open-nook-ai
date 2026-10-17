@@ -7,7 +7,7 @@ description: Use only for approved later OpenNook AI work on MCP clients, tool d
 
 ## Load when
 
-A separately approved future story actually changes MCP discovery/execution or model-initiated tool calls. **Release 0.1 has no such feature**: do not use this skill as permission to add MCP to the MVP.
+A separately approved ONK-005–008 story changes MCP discovery/execution, model-initiated tool calls or the **runtime** custom-skill permission model. The implemented Release 0.1 does not include MCP or runtime skills. Planning docs and the existence of this Codex skill confer no implementation permission.
 
 ## Technical practices
 

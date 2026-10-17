@@ -7,9 +7,9 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16.4.2-1A1A1A?style=flat-square)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-server%20API-6C5CE7?style=flat-square)
 
-**OpenNook AI** is a **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. Later phases may add **read-only MCP tools** and **custom, explicitly activated skills**.
+**OpenNook AI** is a **self-hosted AI chat application** using Next.js and OpenRouter. Choose one of up to five configured models, stream responses, view Markdown and code, render mathematics and diagrams, and resume saved conversations. **The next planned releases** cover **trusted read-only MCP tools (0.2)**, **custom, manually activated skills (0.3)** and **graded practice quizzes plus ungraded chat clarifications (0.4)**.
 
-> **Repository status: ONK-001–004 implemented.** The local Compose stack includes server-only OpenRouter streaming, assistant-ui chat, bounded safe rich rendering and PostgreSQL conversation history. GitHub Actions checks are configured. Provider behavior is tested with mocks; live connectivity and a hosted CI run are not verified. See [release verification](docs/releases/release-0.1-mvp/verification.md) for actual evidence.
+> **Repository status: Release 0.1 implemented locally; Releases 0.2–0.4 planned only.** The current Compose stack includes server-only OpenRouter streaming, assistant-ui chat, safe rich rendering and PostgreSQL history. Hosted GitHub Actions checks passed for the committed Release 0.1 baseline; real provider connectivity remains unverified. The brand metadata/visible About update was added separately after the MVP. Read the [Release 0.1 verification](docs/releases/release-0.1-mvp/verification.md) before describing any tests as passed.
 
 ## Release 0.1 — AI Chat MVP
 
@@ -20,7 +20,7 @@
 - **One self-hosted stack:** Next.js serves React and backend Route Handlers; Docker Compose runs `web` and `db`. OpenRouter remains an external API.
 - **Quality:** deterministic tests, browser smoke tests, CI, explicit empty/error states, and safe rendering of model-generated content.
 
-**Not included in 0.1:** MCP, tools, custom skills, image uploads, accounts, public multi-user hosting, RAG or a separate NestJS API.
+**Not included in Release 0.1:** runtime MCP, tool calling, custom user skills, quizzes, chat clarification forms, image uploads, accounts, public multi-user hosting, RAG or a separate NestJS API. **Story plans for 0.2–0.4 do not implement these features.**
 
 ## How it works
 
@@ -64,12 +64,14 @@ flowchart TB
         Api --> ORM --> DB
     end
     Api -->|HTTPS / selected model| OpenRouter[OpenRouter API]
-    Future[Future: MCP client, tool permissions, custom skills] -.->|Not implemented in 0.1| Api
+    MCP[Planned 0.2: trusted MCP tool calls] -.->|Not implemented| Api
+    Skills[Planned 0.3: runtime Skills] -.->|Not implemented| MCP
+    Quiz[Planned 0.4: practice quizzes and clarifications] -.->|Not implemented| Api
 ```
 
 The OpenRouter API key stays **server-side**. Conversation data stays in the self-hosted database, but **messages sent for generation are shared with the selected cloud provider**. This demo is **single-user and localhost-only** until authentication, access controls, rate limiting and cost safeguards are added.
 
-More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · [Data model](docs/data-model.md) · [Security](docs/security.md).
+More: [Architecture](docs/architecture.md) · [Chat flow](docs/chat-flow.md) · [Data model](docs/data-model.md) · [Security](docs/security.md) · [Planned quiz flow](docs/quizzes.md).
 
 ## Technology stack
 
@@ -102,6 +104,10 @@ OPENROUTER_MODEL_5=
 
 Only non-empty, unique, configured IDs are offered. If the key or all slots are missing, the app explains what must be configured. Select currently available, compatible Qwen, Llama or Mistral models yourself; this baseline does not assume specific model names or prices. See [Model configuration](docs/model-configuration.md).
 
+## Brand metadata
+
+The application displays its name and author/support links from [`public/brand/branding.json`](public/brand/branding.json). The optional `appFavicon`, `appIcon` and `appPoster` reference assets under `public/brand/assets/`; empty values do not show missing images. No image assets are shipped as part of this update. See [Brand metadata](docs/branding.md) for the field meanings and usage. These **presentation settings do not modify the Apache-2.0 license, SPDX notices or application version**. The README's legal attribution remains separate.
+
 ## Local setup
 
 To run the current local chat and model/database APIs:
@@ -118,20 +124,25 @@ For a public deployment, **do not reuse this unauthenticated demo configuration*
 
 ## Roadmap and development guides
 
-Only **Release 0.1** has committed story acceptance criteria. Future MCP and Skills phases are high-level candidates, not implementation authorizations.
+**Release 0.1 is implemented locally.** Releases **0.2 (MCP), 0.3 (Skills) and 0.4 (Quizzes)** have explicit planned story files and acceptance criteria; none of the new functionality is implemented or tested. **Every story still requires separate implementation and commit approval.**
 
 | Document | Purpose |
 | --- | --- |
-| [Roadmap](docs/roadmap.md) | MVP story order and candidate later phases |
+| [Roadmap](docs/roadmap.md) | Delivered MVP and the three planned releases |
 | [Release 0.1](docs/releases/release-0.1-mvp/README.md) | MVP story order and implementation status |
-| [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual commands, observed results and remaining checks |
+| [Release verification](docs/releases/release-0.1-mvp/verification.md) | Actual 0.1 commands and observed results; not repeated for planned releases |
+| [Release 0.2 — MCP](docs/releases/release-0.2-mcp-tool-integration/README.md) | ONK-005–006, planned only; verification not run |
+| [Release 0.3 — Skills](docs/releases/release-0.3-custom-skills/README.md) | ONK-007–008, planned only; verification not run |
+| [Release 0.4 — Quizzes](docs/releases/release-0.4-interactive-quizzes/README.md) | ONK-009–011, planned only; graded practice vs ungraded clarifications |
 | [Local development](docs/development.md) | Current foundation versions, Compose and native setup |
 | [API contract](docs/api-contract.md) | Implemented models/chat/history routes |
 | [Model configuration](docs/model-configuration.md) | Allowlisted OpenRouter models and secrets |
 | [Testing](docs/testing.md) | Unit/renderer/browser checks without billable provider calls |
 | [Rich rendering](docs/rendering.md) | Supported Markdown, math, Mermaid and Vega-Lite syntax and safety limits |
-| [MCP and Skills concept](docs/extensions.md) | Clearly **future**, no runtime code in MVP |
-| [Future ideas](docs/future.md) | Optional features without acceptance criteria |
+| [MCP and Skills plan](docs/extensions.md) | Planned tool/client and runtime skills architecture, not implemented |
+| [Quiz and clarifications plan](docs/quizzes.md) | Single/multi-question UIs; practice grading vs chat follow-ups |
+| [Brand metadata](docs/branding.md) | Presentational identity, optional local icons and poster |
+| [Future ideas](docs/future.md) | Only unplanned options without story acceptance criteria |
 | [Codex roles and skills](.codex/README.md) | Lightweight technical agent guidance |
 | [Story workflow](docs/story-workflow.md) | Approvals and verification evidence |
 

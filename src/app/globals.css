@@ -117,3 +117,14 @@ th { background: var(--badge); }
   .history-panel.history-visible { display: block; grid-column: 1; grid-row: 2; z-index: 2; background: var(--background); width: min(85vw, 22rem); box-shadow: 5px 0 20px #0002; }
   .workspace .chat-shell { grid-column: 1; grid-row: 2; }
 }
+
+/* Read-only application metadata; the legal license remains in LICENSE. */
+.brand-about { margin-left: auto; position: relative; align-self: center; }
+.brand-about > summary { cursor: pointer; list-style: none; color: var(--muted); padding: .55rem .75rem; border-radius: .5rem; font-size: .85rem; }
+.brand-about > summary::-webkit-details-marker { display: none; }
+.brand-about > summary:hover { background: var(--badge); }
+.brand-about-panel { position: absolute; z-index: 10; top: calc(100% + .45rem); right: 0; width: min(19rem, 85vw); padding: 1rem; background: var(--panel); border: 1px solid var(--border); border-radius: .75rem; box-shadow: 0 10px 30px #0002; }
+.brand-about-panel p { margin-block: .45rem; font-size: .8rem; color: var(--muted); }
+.brand-links { display: flex; flex-direction: column; align-items: start; gap: .4rem; margin-block: .75rem; }
+.brand-links a { color: var(--accent); font-size: .85rem; text-underline-offset: .2em; }
+.brand-copyright { font-size: .7rem !important; }

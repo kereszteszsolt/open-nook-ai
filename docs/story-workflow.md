@@ -1,32 +1,26 @@
 # Story-driven Codex workflow
 
-The main Codex session handles **one approved `ONK-*` story** at a time. It may delegate to an optional sole-writer agent; do not start redundant reviewers or parallel implementations.
+The main Codex session handles **one approved `ONK-*` story** at a time. An optional sole-writer agent can be delegated one story; do not spawn redundant parallel implementers or reviewers.
 
 ## Story format
 
-Every Release 0.1 story contains these sections, in order:
-
-1. `Status` — `Planned`, `In progress` or `Implemented`
-2. `User story`
-3. `Goal`
-4. `Dependencies`
-5. `Acceptance criteria` — short, testable checkboxes (aim for 4–8)
-6. `Out of scope`
-
-All four MVP stories begin `Planned`, and **unchecked acceptance criteria remain unchecked** until verified.
+Each story contains `Status`, `User story`, `Goal`, `Dependencies`, `Acceptance criteria`, `Out of scope` and `Verification`. The **Release 0.1** stories are implemented and retain their historical evidence. **ONK-005–011** begin `Planned`, and all their acceptance criteria remain unchecked until independently verified.
 
 ## Implementation and commit gates
 
-1. Codex identifies the next valid story, intended files and risks, and asks permission to **implement**.
-2. Codex changes only its agreed scope. Keep technical methods in skills and feature behavior in source/docs; do not duplicate instructions in many files.
-3. Run focused tests, then relevant integration/browser/container checks if needed. Never perform unapproved billable OpenRouter calls.
-4. Add actual commands and results to the active `verification.md`, including failures and `Not run`. A blocked requirement remains unchecked.
-5. Review the diff; propose a commit message and ask **separately** for permission to commit.
-6. After an approved commit, record its actual hash and ask before moving to the next story. No automatic commit, push, force push or history rewrite.
+1. Identify the approved story, affected files, risks and relevant technical skill; request permission to **implement**.
+2. Edit only that story's agreed scope. Domain requirements belong to the story; technical practices belong to the skill. Never implement a whole release silently.
+3. Run focused tests, then affected browser, database and Compose checks where relevant. Fake MCP servers and mocked OpenRouter are the default.
+4. Record **actual** commands and observations in that release's `verification.md`. Missing checks are `Not run`, not `Passed`.
+5. Review the diff and ask **separately** for commit/push approval. Do not commit or touch later stories without permission.
 
-## Source and documentation conventions
+## Security and source conventions
 
-- Apply the concise SPDX source notice from [AGENTS.md](../AGENTS.md) to eligible new hand-written application source, **not** generic configuration or generated files.
-- Limit comments to non-obvious decisions, using short sentences. Keep plans and historical evidence in Markdown.
-- A future roadmap entry is **not** approval to implement MCP/Skills, OAuth, vision or other later features.
-- The last release story reconciles README status, docs, CI, tests and actual dependencies with what truly shipped. Do not invent results or screenshots.
+- Never call billable OpenRouter models, unknown MCP services or write-capable tools without specific approval.
+- For untrusted tool output and generated quiz content, use server-side validation and data isolation, not prompt instructions alone.
+- A saved Skill is instruction text, not permission; the AI model cannot broaden the backend's allowlist.
+- Quiz scoring is deterministic for objective choices. Chat clarification questions are **ungraded** and require deliberate user submission.
+- [Brand metadata](branding.md) controls **visible identity only**, not SPDX notices, `LICENSE`, secrets, model names or approvals.
+- Apply the short SPDX notice to new manually authored app source only, never to generic/generated configuration, lockfiles, Markdown, JSON, binaries, migrations or other excluded files.
+
+After the last story of a release, reconcile README, security/docs, GitHub metadata and verification with what actually shipped. Do not invent successful tests or screenshots.

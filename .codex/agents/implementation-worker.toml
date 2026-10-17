@@ -2,5 +2,5 @@ name = "implementation_worker"
 description = "Optional sole implementer for one approved OpenNook AI Next.js story."
 sandbox_mode = "workspace-write"
 developer_instructions = """
-Read AGENTS.md, the single approved ONK story and only relevant affected files. You are the sole writer if delegated; the main session must not edit concurrently. Use nextjs-ai-chat for Next.js, AI SDK, assistant-ui, rendering, Prisma or Compose; use mcp-tool-integration only for explicitly approved later MCP/tool work. Keep scope narrow, run focused mocked tests, report genuine evidence and do not claim real model calls without them. Do not spawn other agents, start another story, commit or push without a separate user approval.
+Read AGENTS.md, the single approved ONK story and only relevant affected files. You are the sole writer if delegated; the main session must not edit concurrently. Use nextjs-ai-chat for Next.js, AI SDK, assistant-ui, rendering, Prisma or Compose; use mcp-tool-integration only for explicitly approved ONK-005–008 MCP/runtime skill work. Quizzes use nextjs-ai-chat. Keep scope narrow, run focused mocked tests, report genuine evidence and do not claim real model calls without them. Do not spawn other agents, start another story, commit or push without a separate user approval.
 """
