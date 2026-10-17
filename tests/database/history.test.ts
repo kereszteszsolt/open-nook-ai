@@ -4,6 +4,7 @@
 import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
 import { getDatabase } from "@/server/db";
 import { beginTurn, createConversation, deleteConversation, finishTurn, getConversation, listConversations } from "@/server/conversations/store";
+import { FORMATTING_PROMPT } from "@/server/ai/prompt";
 import { POST as chat } from "@/app/api/chat/route";
 import { GET as list, POST as create } from "@/app/api/conversations/route";
 import { GET as open, DELETE as remove } from "@/app/api/conversations/[id]/route";
@@ -31,6 +32,7 @@ it("saves ordered turns, resumes exclusively from stored context, and exposes on
     expect(events.at(-1)).toMatchObject({ type: "finish", messageMetadata: { version: version + 2, status: "completed" } });
   }
   expect(JSON.parse(String(call.mock.calls[1][1]?.body)).messages).toEqual([
+    { role: "system", content: [{ type: "text", text: FORMATTING_PROMPT }] },
     { role: "user", content: "First" }, { role: "assistant", content: "Saved answer" }, { role: "user", content: "Second" },
   ]);
   const saved = await getConversation(item.id);
@@ -87,6 +89,19 @@ it("bounds stored messages and server context before locking a turn", async () =
   await database().message.updateMany({ where: { conversationId: item.id, role: "assistant" }, data: { content: "OK" } });
   await database().message.createMany({ data: Array.from({ length: 30 }, (_, i) => ({ conversationId: item.id, clientId: crypto.randomUUID(), sequence: i + 2, role: "user" as const, content: "Hi", status: "completed" as const })) });
   await expect(beginTurn(turn(item.id, 2))).rejects.toMatchObject({ status: 413 });
+});
+it("counts server formatting instructions in the context budget without storing them", async () => {
+  const item = await fresh();
+  const first = await beginTurn(turn(item.id, 0, "u".repeat(8000)));
+  await finishTurn(first, "a".repeat(8000), "completed", "stop");
+  const remaining = 8000 - FORMATTING_PROMPT.length;
+  expect(remaining).toBeGreaterThan(0);
+  await expect(beginTurn(turn(item.id, 2, "n".repeat(remaining + 1)))).rejects.toMatchObject({ status: 413 });
+  expect((await getConversation(item.id)).version).toBe(2);
+  expect(await database().message.count({ where: { conversationId: item.id } })).toBe(2);
+  const exact = await beginTurn(turn(item.id, 2, "n".repeat(remaining)));
+  expect(exact.messages.reduce((sum, message) => sum + message.content.length, FORMATTING_PROMPT.length)).toBe(24_000);
+  expect((await getConversation(item.id)).messages.map((message) => message.role)).toEqual(["user", "assistant", "user", "assistant"]);
 });
 it("paginates recent chats deterministically", async () => {
   const items = await Promise.all(Array.from({ length: 22 }, () => fresh()));

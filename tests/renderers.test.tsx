@@ -8,6 +8,7 @@ import { RichText } from "@/components/rendering/rich-text";
 import { MathText } from "@/components/rendering/math";
 import { sanitizeSvg } from "@/components/rendering/sanitize-svg";
 import { CopyButton } from "@/components/rendering/copy-button";
+import { latexAnswer } from "./fixtures/math";
 
 afterEach(cleanup);
 
@@ -100,4 +101,57 @@ describe("copy controls", () => {
     fireEvent.click(screen.getByRole("button"));
     await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Select the text"));
   });
+});
+
+
+it("renders backslash-delimited cases, matrices, aligned rows and inline formulas", () => {
+  const { container } = render(<RichText text={latexAnswer} />);
+  expect(container.querySelectorAll(".katex")).toHaveLength(8);
+  expect(container.querySelectorAll(".math-display .katex")).toHaveLength(3);
+  expect(container.querySelectorAll(".render-fallback")).toHaveLength(0);
+  const annotations = [...container.querySelectorAll('annotation[encoding="application/x-tex"]')].map((node) => node.textContent);
+  expect(annotations[0]).toContain(String.raw`4\\[2pt]`);
+  expect(annotations[1]).toContain(String.raw`\begin{pmatrix}`);
+  expect(annotations[2]).toContain(String.raw`\begin{aligned}`);
+});
+
+it("keeps formula examples in code and escaped delimiters literal", () => {
+  const text = ["`\\(x\\)`", "```tex\n\\[x\\]\n```", "    \\(x\\)", String.raw`\\(x\\)`].join("\n\n");
+  const { container } = render(<RichText text={text} />);
+  expect(container.querySelector(".katex")).toBeNull();
+  expect(container.querySelectorAll("pre code")).toHaveLength(2);
+  expect(container.querySelector("code")?.textContent).toBe(String.raw`\(x\)`);
+});
+
+it("preserves TeX row spacing in quotes/lists and accepts existing dollar delimiters", () => {
+  const text = String.raw`> \[
+> \begin{matrix}1&2\\[2pt]3&4\end{matrix}
+> \]
+
+- \(x^2\) and $y^2$
+
+$$
+z^2
+$$`;
+  const { container } = render(<RichText text={text} />);
+  expect(container.querySelectorAll(".katex")).toHaveLength(4);
+  const first = container.querySelector("annotation")?.textContent;
+  expect(first).toContain(String.raw`1&2\\[2pt]3&4`);
+  expect(first).not.toContain(">");
+});
+
+it.each([String.raw`\(unfinished`, String.raw`\[x`, "\\(" + "x".repeat(2001) + "\\)"])("keeps incomplete/oversized backslash math readable %#", (text) => {
+  const { container } = render(<RichText text={text + "\n\nSurvives"} />);
+  expect(container.querySelector(".katex")).toBeNull();
+  expect(container.textContent).toContain("Survives");
+  expect(container.querySelector(".plain-text")).toBeNull();
+});
+
+it("contains hostile backslash math and keeps complete streamed formulas inert", () => {
+  const text = String.raw`\(\includegraphics{https://private.invalid/x}\) and \[\href{javascript:alert(1)}{go}\]`;
+  const { container, rerender } = render(<RichText text={text} />);
+  expect(container.querySelector("a,img,script,[style*=url]")).toBeNull();
+  expect(container.querySelectorAll(".katex")).toHaveLength(2);
+  rerender(<RichText text={latexAnswer} streaming />);
+  expect(container.querySelector(".katex")).toBeNull();
 });

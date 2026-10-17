@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect, type Page } from "@playwright/test";
+import { latexAnswer } from "../fixtures/math";
+import { percentagePie } from "../fixtures/pie";
 
 const models = { enabled: true, status: "ready", models: ["test/model-one", "test/model-two"].map((id) => ({ id, label: id })) };
 const rich = '# A useful answer\n\n| Item | Value |\n| --- | --- |\n| Focus | 3 |\n\n- A short list\n\n```javascript\nconst answer = 42;\n```\n\nInline $x^2$\n\n$$\nE=mc^2\n$$\n\n```mermaid\nflowchart LR\nA[Question] --> B[Answer]\n```\n\n```vega-lite\n{"mark":"bar","data":{"values":[{"category":"A","amount":3},{"category":"B","amount":5}]},"encoding":{"x":{"field":"category","type":"nominal"},"y":{"field":"amount","type":"quantitative"}}}\n```';
@@ -185,4 +187,44 @@ test("an unavailable selected chat has an explicit recovery state", async ({ pag
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await page.getByRole("button", { name: "New chat" }).click();
   await expect(page.getByRole("textbox")).toBeEnabled();
+});
+
+
+test("renders percentage pie slices with original source and a transparent total", async ({ page }) => {
+  const observed = await safePage(page);
+  await page.route("**/api/chat", (route) => observed.answer(route, "```mermaid\n" + percentagePie + "\n```"));
+  await page.goto("/");
+  await page.getByRole("textbox").fill("Render the reported pie");
+  await page.getByRole("button", { name: "Send" }).click();
+  const diagram = page.getByRole("img", { name: "Mermaid diagram" });
+  await expect(diagram.locator("svg")).toBeVisible();
+  await expect(diagram.locator("path.pieCircle")).toHaveCount(10);
+  for (const label of ["JavaScript", "Python", "C#", "C++", "Go"]) await expect(diagram).toContainText(label);
+  await expect(diagram).toContainText("Top 10 Legnépszerűbb Programozási Nyelvek (2024)");
+  await expect(page.getByText("Values total 122.4%; slices show their share of this total.", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Preview unavailable/)).toHaveCount(0);
+  await page.getByRole("button", { name: "Copy code", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(percentagePie);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  expect(observed.external).toEqual([]); expect(observed.errors).toEqual([]);
+});
+
+
+test("renders backslash LaTeX matrices with local fonts and preserves copied source", async ({ page }) => {
+  const observed = await safePage(page);
+  await page.route("**/api/chat", (route) => observed.answer(route, latexAnswer));
+  await page.goto("/");
+  await page.getByRole("textbox").fill("Show the linear system");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.locator(".assistant-message .katex")).toHaveCount(8);
+  await expect(page.locator(".assistant-message .math-display .katex")).toHaveCount(3);
+  await expect(page.locator(".assistant-message .render-fallback")).toHaveCount(0);
+  await expect(page.locator(".assistant-message .mtable").first()).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => [...document.fonts].some((font) => font.family === "KaTeX_Main" && font.status === "loaded"))).toBe(true);
+  await page.getByRole("button", { name: "Copy message", exact: true }).last().click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(latexAnswer);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: `test-results/math-${test.info().project.name}.png`, fullPage: true });
+  expect(observed.external).toEqual([]); expect(observed.errors).toEqual([]);
 });

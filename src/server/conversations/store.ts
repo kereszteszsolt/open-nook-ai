@@ -3,6 +3,7 @@
 
 import "server-only";
 import type { Conversation, Message } from "@/generated/prisma/client";
+import { FORMATTING_PROMPT } from "@/server/ai/prompt";
 import { getDatabase } from "@/server/db";
 import type { ConversationSummary, FinalMessageStatus, SavedConversation } from "@/shared/conversations";
 import { ConversationError, conflict } from "./errors";
@@ -85,7 +86,7 @@ export async function beginTurn(input: BeginTurn): Promise<PreparedTurn> {
     const context = row.messages.filter((message) => message.status === "completed" && (!input.regenerate || message.id !== last?.id))
       .map((message) => ({ role: message.role, content: message.content }));
     if (!input.regenerate) context.push({ role: "user", content: input.user.content });
-    if (!context.length || context.length > 32 || context.some((message) => message.content.length > 8000) || context.reduce((sum, message) => sum + message.content.length, 0) > 24_000) {
+    if (!context.length || context.length + 1 > 32 || context.some((message) => message.content.length > 8000) || context.reduce((sum, message) => sum + message.content.length, FORMATTING_PROMPT.length) > 24_000) {
       throw new ConversationError(413, "conversation_limit", "This chat exceeds the context limit. Start a new chat.");
     }
     const locked = await tx.conversation.updateMany({

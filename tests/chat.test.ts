@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FORMATTING_PROMPT } from "@/server/ai/prompt";
 import { POST } from "@/app/api/chat/route";
 import { MAX_PROVIDER_BYTES } from "@/server/ai/provider";
 import { MAX_OUTPUT_BYTES } from "@/server/ai/stream";
@@ -135,7 +136,7 @@ describe("real AI SDK and OpenRouter adapter with mocked fetch", () => {
     expect(sent.model).toBe(TEST_MODEL);
     expect(sent.max_tokens).toBe(123);
     expect(sent.provider).toMatchObject({ allow_fallbacks: false, require_parameters: true });
-    expect(sent.messages).toEqual([{ role: "user", content: "Hello" }]);
+    expect(sent.messages).toEqual([{ role: "system", content: [{ type: "text", text: FORMATTING_PROMPT }] }, { role: "user", content: "Hello" }]);
     expect(sent.models).toBeUndefined();
     expect(sent.tools).toBeUndefined();
   });
@@ -151,6 +152,7 @@ describe("real AI SDK and OpenRouter adapter with mocked fetch", () => {
     await response.text();
     const sent = JSON.parse(String(network.mock.calls[0][1]?.body));
     expect(sent.messages).toEqual([
+      { role: "system", content: [{ type: "text", text: FORMATTING_PROMPT }] },
       { role: "user", content: "Hello" }, { role: "assistant", content: "Earlier answer" }, { role: "user", content: "More please" },
     ]);
     expect(JSON.stringify(sent)).not.toContain("ephemeral-chat");

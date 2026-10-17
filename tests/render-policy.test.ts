@@ -4,6 +4,8 @@
 import { describe, expect, it } from "vitest";
 import { parseChart, safeLink, validateMermaid } from "@/components/rendering/policy";
 
+import { percentagePie } from "./fixtures/pie";
+
 const chart = { mark: "bar", data: { values: [{ category: "A", amount: 3 }] }, encoding: { x: { field: "category", type: "nominal" }, y: { field: "amount", type: "quantitative" } } };
 
 describe("rich content boundaries", () => {
@@ -14,7 +16,7 @@ describe("rich content boundaries", () => {
     expect(safeLink("https://example.com/page")).toBe("https://example.com/page");
     expect(safeLink("mailto:hello@example.com")).toBe("mailto:hello@example.com");
   });
-  it("accepts a bounded ordinary flowchart", () => expect(validateMermaid("flowchart LR\nA[Idea] --> B[Result]")).toContain("Idea"));
+  it("accepts a bounded ordinary flowchart", () => expect(validateMermaid("flowchart LR\nA[Idea] --> B[Result]").source).toContain("Idea"));
   it.each([
     "%%{init: {securityLevel: 'loose'}}%%\nflowchart LR\nA-->B", "---\nconfig: {}\n---\nflowchart LR\nA-->B",
     "flowchart LR\nA[<img src=x onerror=alert(1)>]", "flowchart LR\nclick A callback", "flowchart LR\nA[https://private.invalid/data]",
@@ -39,3 +41,26 @@ describe("rich content boundaries", () => {
     expect(() => parseChart(" ".repeat(32001))).toThrow();
   });
 });
+
+
+it("prepares the reported percentage pie without changing labels or values", () => {
+  expect(validateMermaid(percentagePie)).toEqual({
+    source: percentagePie.replace(/%/g, ""),
+    note: "Values total 122.4%; slices show their share of this total.",
+  });
+});
+
+it("keeps native pie values, quoted percent labels and showData unchanged", () => {
+  const source = 'pie showData title Usage\n"100% local" : 2\n"Other" : 3';
+  expect(validateMermaid(source)).toEqual({ source });
+  expect(validateMermaid('pie\n"A" : 25%\n"B" : 75%')).toEqual({ source: 'pie\n"A" : 25\n"B" : 75' });
+});
+it.each([
+  'pie\n"A" : 0', 'pie\n"A" : -2', 'pie\n"A" : NaN', 'pie\n"A" : 1e99',
+  'pie\n"A" : 1000000000001', 'pie\n"A" : 1.234', 'pie\n"A" : 10%%',
+  'pie\n"A" : 10%\n"B" : 90', 'pie\n"A" : 1\n"A" : 2',
+  'pie\n"A" : 10 " #FFD700" // Color', 'pie\n" " : 1', 'pie\ntitle Empty',
+  'pie\ntitle First\ntitle Second\n"A" : 1',
+  'pie\n"A" : 1\nclick A callback', 'pie\n%%{init: {securityLevel: "loose"}}%%\n"A" : 1',
+  'pie\n"<img src=x>" : 1', 'pie\n"https://private.invalid" : 1',
+])("rejects malformed, ambiguous or unsafe pie input %#", (source) => expect(() => validateMermaid(source)).toThrow());

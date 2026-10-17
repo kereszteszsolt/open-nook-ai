@@ -9,12 +9,12 @@ import { sanitizeSvg } from "./sanitize-svg";
 
 export function Graphic({ source, kind }: { source: string; kind: "mermaid" | "vega-lite" }) {
   const id = useId().replace(/[^a-z\d]/gi, "");
-  const [result, setResult] = useState<{ source: string; svg?: string; failed?: boolean }>();
+  const [result, setResult] = useState<{ source: string; svg?: string; note?: string; failed?: boolean }>();
   useEffect(() => {
     let active = true;
     const draw = async () => {
       if (kind === "mermaid") {
-        validateMermaid(source);
+        const diagram = validateMermaid(source);
         const { default: mermaid } = await import("mermaid");
         mermaid.initialize({
           startOnLoad: false, securityLevel: "strict", suppressErrorRendering: true,
@@ -22,7 +22,7 @@ export function Graphic({ source, kind }: { source: string; kind: "mermaid" | "v
           htmlLabels: false,
           secure: ["securityLevel", "startOnLoad", "maxTextSize", "maxEdges", "secure", "htmlLabels"],
         });
-        return sanitizeSvg((await mermaid.render(`diagram${id}`, source)).svg);
+        return { svg: sanitizeSvg((await mermaid.render(`diagram${id}`, diagram.source)).svg), note: diagram.note };
       }
       const spec = parseChart(source);
       const [vega, { compile }, { expressionInterpreter }] = await Promise.all([
@@ -39,14 +39,17 @@ export function Graphic({ source, kind }: { source: string; kind: "mermaid" | "v
         },
         logger: vega.logger(vega.None),
       });
-      try { await view.runAsync(); return sanitizeSvg(await view.toSVG()); }
+      try { await view.runAsync(); return { svg: sanitizeSvg(await view.toSVG()) }; }
       finally { view.finalize(); }
     };
-    void draw().then((svg) => { if (active) setResult({ source, svg }); })
+    void draw().then((graphic) => { if (active) setResult({ source, ...graphic }); })
       .catch(() => { if (active) setResult({ source, failed: true }); });
     return () => { active = false; };
   }, [source, kind, id]);
   if (!result || result.source !== source) return <p role="status">Preparing {kind === "mermaid" ? "diagram" : "chart"}…</p>;
   if (result.failed) return <p className="render-warning" role="status">Preview unavailable. The source remains below; check the supported syntax and limits.</p>;
-  return <div className="graphic" data-kind={kind} role="img" tabIndex={0} aria-label={kind === "mermaid" ? "Mermaid diagram" : "Vega-Lite chart"} dangerouslySetInnerHTML={{ __html: result.svg! }} />;
+  return <>
+    {result.note && <p className="render-note" role="status">{result.note}</p>}
+    <div className="graphic" data-kind={kind} role="img" tabIndex={0} aria-label={kind === "mermaid" ? "Mermaid diagram" : "Vega-Lite chart"} dangerouslySetInnerHTML={{ __html: result.svg! }} />
+  </>;
 }

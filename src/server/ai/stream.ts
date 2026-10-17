@@ -6,6 +6,7 @@ import { createUIMessageStreamResponse, streamText, toUIMessageStream, type Mode
 import type { AIConfiguration } from "./config";
 import type { ChatLifecycle } from "./lifecycle";
 import type { FinalMessageStatus } from "@/shared/conversations";
+import { FORMATTING_PROMPT } from "./prompt";
 import { configuredModel } from "./provider";
 
 export const MAX_OUTPUT_BYTES = 512 * 1024;
@@ -41,6 +42,7 @@ export function streamChat(
   const result = streamText({
     model: configuredModel(configuration, model, lifecycle),
     messages,
+    system: FORMATTING_PROMPT,
     maxOutputTokens: configuration.maxOutputTokens,
     maxRetries: 0,
     streamRetries: 0,
