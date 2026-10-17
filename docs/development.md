@@ -1,6 +1,6 @@
-# Local development — ONK-001 foundation
+# Local development — ONK-001/002
 
-The current app provides a responsive placeholder and `GET /api/health`. Chat, OpenRouter calls and conversation storage are not implemented yet.
+The app provides a responsive placeholder, database readiness, `GET /api/models` and a server-only `POST /api/chat` stream. The chat UI and conversation storage remain planned. Provider checks use mocks; live OpenRouter connectivity has not been tested.
 
 ## Tested foundation versions
 
@@ -13,8 +13,9 @@ The current app provides a responsive placeholder and `GET /api/health`. Chat, O
 | Prisma CLI / Client / PostgreSQL adapter | 7.10.1 |
 | PostgreSQL Docker image | 18.6-bookworm |
 | Zod / Vitest | 4.6.7 / 5.0.5 |
+| AI SDK / OpenRouter adapter | 7.0.143 / 3.1.0 |
 
-The lockfile pins transitive dependencies. Install with `npm ci`. The assistant-ui / AI SDK integration will be selected and tested in the later stories; those packages are not installed by ONK-001.
+The lockfile pins transitive dependencies. Install with `npm ci`. The assistant-ui runtime is deferred to ONK-003; the text-only AI SDK 7 UI-message API contract is documented in [HTTP contracts](api-contract.md).
 
 Node's exact version is enforced by `.npmrc`. npm install-script approvals in `package.json` are pinned to the installed Prisma/engine and native resolver versions; no blanket script approval is enabled. ESLint 9.39.5 matches the current Next.js React/accessibility plugin peer ranges, although npm marks that ESLint major as deprecated.
 
@@ -59,7 +60,7 @@ npm run dev
 
 The optional `compose.dev.yaml` publishes PostgreSQL only on `127.0.0.1:${DB_PORT:-5433}`. Match that port in the native `DATABASE_URL`. Native development and `npm start` bind Next.js to `127.0.0.1`; inside Compose the web process listens on its container interface while the host mapping remains local.
 
-The Compose URL uses `db:5432`; the native URL uses `127.0.0.1:5433`. Switch the URL back before starting the full Compose stack. Percent-encode special characters in URL credentials. OpenRouter settings may remain empty throughout ONK-001.
+The Compose URL uses `db:5432`; the native URL uses `127.0.0.1:5433`. Switch the URL back before starting the full Compose stack. Percent-encode special characters in URL credentials. OpenRouter settings may remain empty; models/chat then report a disabled setup state. Set a key and one or more of the five model slots only when you intend to make billable calls. Compose forwards these server settings at runtime; see [model configuration](model-configuration.md).
 
 ## Focused checks
 
@@ -72,8 +73,8 @@ npm run build
 npm start
 ```
 
-Tests mock the database for health success/error cases and check environment validation without exposing credentials. They do not prove a live database connection; see the release [verification](releases/release-0.1-mvp/verification.md) for actual Compose outcomes. Building, generating Prisma Client and type checking do not require a live database or an OpenRouter key. Runtime startup requires a complete PostgreSQL connection URL.
+Tests mock the database for health success/error cases, validate environment settings and exercise the actual AI SDK/OpenRouter adapter with explicitly mocked fetch. Test setup clears all provider environment slots and blocks unmocked global fetch; no secret or live provider call is needed. They do not prove a live database connection; see the release [verification](releases/release-0.1-mvp/verification.md) for actual Compose outcomes. Building, generating Prisma Client and type checking do not require a live database or an OpenRouter key. Runtime startup requires a complete PostgreSQL connection URL.
 
-Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database settings only at runtime. The provider and rich-rendering stories have separate approval and test boundaries.
+Local `.env*` files are ignored by Git and excluded from Docker builds, except the non-secret `.env.example`. The Docker image receives database/provider settings only at runtime. Provider retries and fallbacks are disabled; timeout, cancellation and bounded text streaming are tested. The rich-rendering story has separate approval and test boundaries.
 
 Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [Prisma Client v7](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/introduction), [Prisma generation without models](https://www.prisma.io/docs/cli/v7/generate), [PostgreSQL container persistence](https://docs.docker.com/guides/postgresql/immediate-setup-and-data-persistence/).

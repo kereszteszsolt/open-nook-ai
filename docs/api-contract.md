@@ -1,48 +1,69 @@
-# HTTP contracts — foundation and target MVP
+# HTTP contracts — local API and target MVP
 
-Next.js App Router will serve the API through same-origin Route Handlers. Actual stream format and assistant-ui runtime adapter must match the **pinned AI SDK version** chosen during implementation.
+Next.js App Router serves same-origin Route Handlers. ONK-001 implements health; ONK-002 implements the model registry and streaming chat API. Conversation routes remain planned for ONK-004. The browser is still a placeholder until ONK-003.
 
-ONK-001 implements only `GET /api/health`: a no-store `200` after a successful PostgreSQL probe, or a generic `503` on failure. See [Local development](development.md). All other endpoints below remain planned.
-
-| Endpoint | Purpose | Story |
+| Endpoint | Purpose | Story / state |
 | --- | --- | --- |
-| `GET /api/health` | Local readiness without secrets | ONK-001 |
-| `GET /api/models` | Sanitized configured OpenRouter model list | ONK-002 |
-| `POST /api/chat` | Start streaming from one allowlisted model | ONK-002 |
-| `GET /api/conversations` | List saved conversations | ONK-004 |
-| `POST /api/conversations` | Create conversation | ONK-004 |
-| `GET /api/conversations/{id}` | Read messages ordered by creation/sequence | ONK-004 |
-| `DELETE /api/conversations/{id}` | Delete conversation and its messages | ONK-004 |
+| `GET /api/health` | No-store `200` after a PostgreSQL probe; generic `503` on failure | ONK-001 / implemented |
+| `GET /api/models` | Safe configured OpenRouter model list and setup state | ONK-002 / implemented |
+| `POST /api/chat` | Stream from one allowlisted model | ONK-002 / implemented |
+| `GET /api/conversations` | List saved conversations | ONK-004 / planned |
+| `POST /api/conversations` | Create conversation | ONK-004 / planned |
+| `GET /api/conversations/{id}` | Read ordered messages | ONK-004 / planned |
+| `DELETE /api/conversations/{id}` | Delete conversation and its messages | ONK-004 / planned |
 
-The route names are planning contracts and can be adjusted in the active story if a compatible adapter requires it, with the documentation updated at the same time. No MCP or Skills endpoints are part of the MVP.
-
-## Example non-secret model list
+## Model registry
 
 ```json
 {
-  "models": [
-    { "id": "provider/model-id", "label": "Configured model" }
-  ]
+  "enabled": true,
+  "status": "ready",
+  "models": [{ "id": "provider/model-id", "label": "provider/model-id" }]
 }
 ```
 
-This is a shape example, not proof that `provider/model-id` exists on OpenRouter. Blank model slots are filtered out and duplicates removed; no API key or sensitive provider metadata is returned.
+The example ID is a placeholder, not a verified OpenRouter model. Labels are the configured IDs; blank slots and duplicates are removed. A missing key or empty registry returns `200`, `enabled: false`, an empty `models` array and `status: "missing_api_key"` or `"missing_models"`. Invalid server settings return the same disabled shape with `503` and `"invalid_configuration"`. Responses are uncached and never contain a key or provider metadata.
 
-## Chat request concept
+## Streaming request
+
+Send `Content-Type: application/json`:
 
 ```json
 {
   "model": "provider/model-id",
-  "conversationId": "opaque-id",
-  "message": "Explain this code snippet"
+  "messages": [
+    { "id": "user-1", "role": "user", "parts": [{ "type": "text", "text": "Explain this code snippet" }] }
+  ]
 }
 ```
 
-- `conversationId` may be omitted for a new chat; the contract is finalized when persistence is implemented.
-- The backend validates request size, model allowlist, server-side secrets, conversation access and timeouts.
-- The response is a **stream** following the pinned AI SDK + assistant-ui protocol, not a static JSON object.
-- Do not return authorization headers, provider keys or internal stack traces.
+This text-only UI-message shape supports the pinned AI SDK 7 transport. Optional bounded `id`, `trigger` (`submit-message` / `regenerate-message`) and `messageId` fields are transport identifiers; they are not stored or forwarded to OpenRouter. Text parts may include `state: "streaming" | "done"`. All other fields are rejected. There is no `conversationId` support or database persistence yet; the caller supplies bounded prior text context.
 
-## Error cases
+- Maximum UTF-8 body: **64 KiB**, enforced while reading even without a truthful `Content-Length`.
+- Between **1 and 32** messages, each with a unique 1–128 character ID, role `user` or `assistant`, and **1–8 text parts**. The first and last messages must be from the user.
+- Nonblank combined text per message: at most **8,000 UTF-16 code units**; entire context: **24,000**. System prompts, files, tools and client-supplied generation/provider options are rejected.
+- Model ID must exactly match the server registry. The total deadline includes upload, provider connection and streaming; see [configuration](model-configuration.md).
 
-Test missing/unknown model, no API key, invalid conversation identifier, oversized content, provider timeout, network error, stream cancellation and database failure. Keep user-visible messages concise while logging only safe operational context. All app-changing routes remain localhost-only until authentication is added in a separately approved future release.
+After validation, the response uses the [AI SDK UI-message SSE protocol](https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol), with `Content-Type: text/event-stream`, `x-vercel-ai-ui-message-stream: v1`, `Cache-Control: no-store` and `X-Accel-Buffering: no`. It forwards text and lifecycle events only, with local message/text IDs. Reasoning, sources, tools, credentials, provider headers and metadata are omitted. A successful answer ends with a `finish` event; `[DONE]` terminates the transport and alone does not mean success.
+
+Provider failures after the stream opens produce a generic `error` event, potentially alongside a `finish` whose `finishReason` is `error`. Missing/unsupported completion reasons, deadline and output-limit stops produce `error` + `abort` without a successful `finish`; cancellation aborts generation. Partial output is not a completed or saved answer. Disconnecting/cancelling the HTTP response aborts the upstream request. There are no automatic retries or model fallbacks.
+
+Provider bytes are capped at **2 MiB** before parsing. Forwarded event JSON payloads are capped at **512 KiB**, plus bounded terminal events and SSE framing. The provider output-token limit is also server-controlled. These are request limits, not account-level spending controls.
+
+## Errors before streaming
+
+```json
+{ "error": { "code": "model_not_allowed", "message": "Select a configured model." } }
+```
+
+| HTTP status | Code / meaning |
+| --- | --- |
+| `400` | `invalid_request` or `model_not_allowed` |
+| `413` | `request_too_large` |
+| `415` | `unsupported_content_type` |
+| `408` | `request_timeout` while reading input |
+| `499` | `request_cancelled` before streaming |
+| `503` | `ai_not_configured` or `invalid_configuration` |
+| `502` | `provider_unavailable` for synchronous setup failure |
+
+Errors are uncached and omit raw inputs, authorization headers, provider responses and stack traces. Provider HTTP errors are reported inside the already-open SSE response, not as a new HTTP status. All routes remain localhost-only until separately approved authentication and cost controls exist. No MCP or Skills endpoints are part of this release.

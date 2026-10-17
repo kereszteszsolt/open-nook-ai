@@ -1,6 +1,6 @@
 # Chat and rich rendering — Release 0.1 target
 
-**Status: Planned.** This is user-facing behavior, not a completed feature.
+**Status: UI and persistence planned.** ONK-002 implements the server model registry and text streaming API with mocked-provider verification. The complete user-facing flow below belongs to ONK-003/004; see the current [API contract](api-contract.md).
 
 ## Basic chat
 

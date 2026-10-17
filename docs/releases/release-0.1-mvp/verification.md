@@ -2,14 +2,14 @@
 
 ## Status
 
-**Release 0.1 in progress.** ONK-001 provides the local Next.js/PostgreSQL foundation. ONK-002–004 remain planned; no live model calls or chat features have been implemented. The original documentation-only review is retained below as historical evidence.
+**Release 0.1 in progress.** ONK-001 provides the local Next.js/PostgreSQL foundation; ONK-002 adds the server-only model registry and streaming API. ONK-003/004 remain planned. Provider verification uses mocks; live connectivity has not been tested. The original documentation-only review is retained below as historical evidence.
 
 ## Evidence table
 
 | Story | State | Focused checks | Browser / Compose / live model | Notes |
 | --- | --- | --- | --- | --- |
 | ONK-001 | Implemented | 13 Vitest tests, lint, typecheck, Prisma validation and build passed | Compose and browser passed; live model Not run | Foundation only; see detailed evidence below |
-| ONK-002 | Planned | Not run | Not run | OpenRouter not integrated |
+| ONK-002 | Implemented | 66 new tests / 79 total, lint, typecheck and production builds passed | Compose + real HTTP with mocked provider passed; live model Not run | No chat UI or persistence yet; see evidence below |
 | ONK-003 | Planned | Not run | Not run | Chat UI and renderers not implemented |
 | ONK-004 | Planned | Not run | Not run | Persistence, E2E and CI not implemented |
 
@@ -73,3 +73,44 @@ The isolated project was `open-nook-ai-onk001`, using `/tmp/open-nook-onk001.env
 - Native commands were exercised inside Node 24.20.0 containers; a Windows-host Node/browser session was **Not run**. OpenRouter, assistant-ui, conversation CRUD, CI and billable provider checks are **Not run / out of scope** for ONK-001.
 - Final commit review: `git -c core.whitespace=cr-at-eol diff --cached --check` flagged only the Prisma-generated empty migration's trailing blank line. Other staged files passed unchanged whitespace checks. The generated SQL passed with only `blank-at-eof` disabled, and its SHA-256 matched the live migration ledger; its original bytes were preserved. Package/lock consistency, 60 local links, source notices and staged secret checks passed.
 - The user separately approved the ONK-001 implementation commit after review on 2026-10-17. No push was requested.
+
+## ONK-002 implementation verification — 2026-10-17
+
+Environment: same Windows-mounted WSL checkout, Docker Engine 29.6.1 / Compose v5.3.0, Node.js 24.20.0 / npm 11.19.0. Implementation was explicitly approved by the user; the implementation checks below preceded separate commit approval. No push was requested.
+
+### Scope and commands
+
+Added `src/server/ai/{config,request,lifecycle,provider,stream}.ts`, `GET /api/models`, `POST /api/chat`, server-side Compose settings and deterministic test fixtures. The text-only UI-message request replaces the earlier conceptual `message`/`conversationId` shape; transport IDs are validated but never persisted. The current contract and limits are in [HTTP contracts](../../api-contract.md) and [Model configuration](../../model-configuration.md). No UI, renderer, database schema or CI work was added.
+
+Commands beginning with `npm` below ran inside `open-nook-ai-onk001-base` using `docker run --rm --user "$(id -u):$(id -g)" --mount type=bind,src="$PWD",dst=/app --workdir /app --env npm_config_cache=/tmp/npm-cache --env CHECKPOINT_DISABLE=1 open-nook-ai-onk001-base <command>`. No host Node installation was changed.
+
+| Command | Observed result |
+| --- | --- |
+| `npm install --save-exact --no-audit --no-fund ai@7.0.143 @openrouter/ai-sdk-provider@3.1.0` | Passed; exact direct dependencies and lockfile updated, no forced peer overrides |
+| `npm run test -- tests/ai-config.test.ts tests/chat.test.ts` | Initial failures exposed empty-message refinement, a provider-generated text ID, asynchronous response cancellation and an unhandled aborted decoder branch. Fixes passed all 61 tests without unhandled errors; further cases were then added |
+| `npm run test` | Final pass: **79 tests in 4 files**: 20 configuration/models, 46 chat/SDK and 13 foundation regressions; no live network |
+| `npm run lint` | Passed with zero warnings, including a rerun after the final stream-completion fix |
+| `npm run typecheck` | Passed after replacing the configuration parser's `NodeJS.ProcessEnv` parameter type (Next.js adds a required `NODE_ENV`) with a readonly environment dictionary |
+| `npm run build` | Passed, including the final rebuild: static placeholder and dynamic `/api/health`, `/api/models`, `/api/chat`; integrated TypeScript checking passed |
+| `docker compose --env-file /tmp/open-nook-onk002.env -p open-nook-ai-onk002 config --quiet` | Passed; parsed-config assertions confirmed only web/db, local web port, no published DB port, one persistent volume and only the intended server settings |
+| `docker compose --env-file /tmp/open-nook-onk002.env -p open-nook-ai-onk002 build web` | Passed, including clean `npm ci` and the final rebuild after completion handling changed |
+
+The actual installed SDK and OpenRouter adapter are exercised together; only global fetch is replaced. Tests cover trimmed/deduplicated five-slot configuration, disabled/invalid setup, strict bounded requests, context conversion, denied models, malformed JSON/UTF-8, misleading payload length, provider HTTP/network/SSE failures, missing completion, unexpected tool completion, partial-body failure, redirects, output limits, timeout before headers and during streaming, cancelled uploads/clients/readers and timer cleanup. All provider settings are cleared by test setup; unmocked global fetch throws. No API key is needed by tests or build.
+
+### Production HTTP and Compose evidence
+
+The isolated project is `open-nook-ai-onk002`, using generated database credentials in `/tmp/open-nook-onk002.env` and web port **33020**. The existing ONK-001 stack and unrelated applications were preserved. Test-only files remained in `/tmp/open-nook-onk002-check`, outside Git and the production image.
+
+- `docker compose --env-file /tmp/open-nook-onk002.env -p open-nook-ai-onk002 -f compose.yaml -f /tmp/open-nook-onk002-check/compose.mock.yaml up -d --wait --wait-timeout 120`: passed; web/db healthy. A temporary Node preload intercepted the fixed OpenRouter endpoint and denied other external fetches, using a clearly synthetic key and model IDs. It returned realistic provider SSE to the production SDK, rather than replacing the application Route Handlers.
+- `python3 /tmp/open-nook-onk002-check/smoke.py`: passed against real HTTP. Verified healthy PostgreSQL, two deduplicated models, unknown/malformed/oversized requests with no provider access, protocol headers and text stream, safe provider 401, partial-stream timeout, output-byte limit, incomplete completion and client disconnection. Exactly **6 mocked upstream calls**, one per accepted request, **0 real provider calls**; HTTP disconnect aborted the upstream signal in **3 ms**. Provider key/headers/generation ID were absent from public output. No invalid request triggered a provider attempt.
+- `docker compose --env-file /tmp/open-nook-onk002.env -p open-nook-ai-onk002 up -d --no-deps --force-recreate --wait --wait-timeout 120 web`: passed; removed the temporary preload/volume and synthetic provider configuration. Read-only Docker inspection and HTTP assertions confirmed healthy non-root web, connected DB, `/` returning `200`, uncached disabled `/api/models`, `POST /api/chat` returning `503 ai_not_configured`, no test mount/`NODE_OPTIONS`, and clean logs. The earlier ONK-001 web remained healthy.
+
+### Security, review and limits
+
+- A network-disabled `docker run --rm --network none --entrypoint node open-nook-ai-onk002-web --input-type=module -e ...` assertion passed: no `.env*` files, baked provider/database variables, test fixture directory or Vitest dependency in the production image.
+- `python3 /tmp/open-nook-onk002-check/audit.py`: passed **67 local documentation/asset links**, Markdown fences, handwritten source notices, exact package/lock versions, candidate-file secret checks and **9 client JavaScript files** with no private settings or provider endpoint. The audit initially treated a public `.env.example` placeholder as a secret; it was corrected to exclude public example values and include the generated test credentials and synthetic runtime key. No private values were printed.
+- Default SDK error logging is overridden; public events contain text and safe lifecycle fields only. Raw provider errors, reasoning, source/tool/file payloads and metadata are omitted. SDK/provider retries and fallback are disabled. Provider response bytes, forwarded output, context, upload and total duration are bounded. Unknown or tool-call completion does not become a successful finish.
+- Live OpenRouter connectivity, real model compatibility and charged generation: **Not run**, no separate approval requested. Mocks do not prove cloud connectivity or provider-side cancellation/billing behavior.
+- Browser chat/assistant-ui behavior: **Not run**, ONK-003 is still planned. UI source did not change; the ONK-001 placeholder browser evidence remains historical. Conversation persistence and functional CI remain ONK-004.
+
+- Final `git diff HEAD --check` passed. At implementation closeout, the staged diff was empty; all new and modified source/config/test files were reviewed, including untracked files. No local environment file, generated migration change, secret, runtime preload or unrelated work is included. The user separately approved the ONK-002 commit on 2026-10-17 after the successful checks and review; no push was requested.

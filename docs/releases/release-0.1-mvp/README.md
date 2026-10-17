@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress — ONK-001 implemented.** Next.js, database readiness, Prisma migration infrastructure and a local Compose stack are available and verified. Chat, live cloud calls, conversation history and CI remain unimplemented. See [verification.md](verification.md) for observed outcomes.
+**In progress — ONK-001/002 implemented.** Next.js, database readiness, Prisma migration infrastructure, local Compose and a server-only OpenRouter streaming API are available. Provider checks are mocked; live connectivity is not verified. The chat UI, rich rendering, conversation history and CI remain planned. See [verification.md](verification.md) for observed outcomes.
 
 ## Goal
 
@@ -22,7 +22,7 @@ Build a minimal self-hosted Next.js chat application with assistant-ui, AI SDK s
 | Story | Goal | Status |
 | --- | --- | --- |
 | [ONK-001](stories/ONK-001-nextjs-foundation-and-database.md) | App, DB and Docker foundation | Implemented |
-| [ONK-002](stories/ONK-002-openrouter-streaming-model-selection.md) | Server-side model allowlist and streaming | Planned |
+| [ONK-002](stories/ONK-002-openrouter-streaming-model-selection.md) | Server-side model allowlist and streaming | Implemented |
 | [ONK-003](stories/ONK-003-assistant-ui-rich-rendering.md) | Chat UI, safe Markdown/math/diagrams/charts | Planned |
 | [ONK-004](stories/ONK-004-conversation-persistence-and-verification.md) | History, tests, CI, runtime proof and docs | Planned |
 
