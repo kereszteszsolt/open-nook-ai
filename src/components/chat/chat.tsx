@@ -77,7 +77,7 @@ function Session({ models, model, selectModel, reloadModels, initial, onSaved, o
         conversationId: state.id, version: state.version, requestId: crypto.randomUUID() } };
     },
   }), [model, onSaved]);
-  const chat = useChat({ transport, messages: initial ? uiMessages(initial) : [],
+  const chat = useChat({ throttle: 50, transport, messages: initial ? uiMessages(initial) : [],
     onFinish: () => { void sync.current(); }, onError: () => { void sync.current(); },
   });
   useEffect(() => { sync.current = () => {
@@ -182,11 +182,18 @@ export function Chat() {
     }).then((result) => {
       if (controller.signal.aborted) return;
       setModels(result); setFailed(false);
-      setModel((current) => result.models.some((item) => item.id === current) ? current : result.models[0]?.id ?? "");
+      setModel((current) => {
+        let preferred = current;
+        try { preferred ||= sessionStorage.getItem("opennook.model") ?? ""; } catch { /* Storage can be unavailable. */ }
+        return result.models.some((item) => item.id === preferred) ? preferred : result.models[0]?.id ?? "";
+      });
     }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, [refresh]);
   if (failed) return <main className="connection-state"><h1>Models could not be loaded</h1><p>Check that OpenNook is running, then try again.</p><button type="button" className="primary-button" onClick={() => { setFailed(false); setRefresh((value) => value + 1); }}>Try again</button></main>;
   if (!models) return <main className="connection-state"><p role="status">Loading your models…</p></main>;
-  return <History>{({ initial, onSaved, onBusy }) => <Session models={models} model={model} selectModel={setModel} reloadModels={() => setRefresh((value) => value + 1)} initial={initial} onSaved={onSaved} onBusy={onBusy} />}</History>;
+  return <History>{({ initial, onSaved, onBusy }) => <Session models={models} model={model} selectModel={(value) => {
+    setModel(value);
+    try { sessionStorage.setItem("opennook.model", value); } catch { /* The in-memory selection still works. */ }
+  }} reloadModels={() => setRefresh((value) => value + 1)} initial={initial} onSaved={onSaved} onBusy={onBusy} />}</History>;
 }

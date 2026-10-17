@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect, type Page } from "@playwright/test";
+import { mermaidExamples } from "../fixtures/format-examples";
 import { latexAnswer } from "../fixtures/math";
 import { percentagePie } from "../fixtures/pie";
 
@@ -76,6 +77,9 @@ test("model selection, keyboard send, rich rendering, copy, regenerate and new c
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("const answer = 42;");
   await page.getByRole("button", { name: "Copy message", exact: true }).last().click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(rich);
+  await page.reload();
+  await expect(page.getByLabel("Model", { exact: true })).toHaveValue("test/model-two");
+  await expect(page.locator(".assistant-message .katex")).toHaveCount(2);
   expect(calls).toHaveLength(1);
   expect(calls[0].model).toBe("test/model-two");
   await page.getByRole("button", { name: "Regenerate", exact: true }).click();
@@ -227,4 +231,31 @@ test("renders backslash LaTeX matrices with local fonts and preserves copied sou
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.screenshot({ path: `test-results/math-${test.info().project.name}.png`, fullPage: true });
   expect(observed.external).toEqual([]); expect(observed.errors).toEqual([]);
+});
+
+
+test("every Mermaid system-prompt example renders with the real library", async ({ page }) => {
+  const observed = await safePage(page);
+  let response = "";
+  await page.route("**/api/chat", route => observed.answer(route, response));
+  for (let offset = 0; offset < mermaidExamples.length; offset += 3) {
+    response = mermaidExamples.slice(offset, offset + 3).map(source => "```mermaid\n" + source + "\n```").join("\n\n");
+    await page.goto("/");
+    await page.getByRole("textbox").fill("Show supported diagrams");
+    await page.getByRole("button", { name: "Send" }).click();
+    const diagrams = page.getByRole("img", { name: "Mermaid diagram" });
+    await expect(diagrams).toHaveCount(3);
+    for (let index = 0; index < 3; index++) await expect(diagrams.nth(index).locator("svg")).toBeVisible();
+    for (const label of offset === 0 ? ["Question", "User", "Chat"] : ["Ready", "CHAT", "Example"]) {
+      await expect(page.locator(".assistant-message")).toContainText(label);
+    }
+    await expect(page.getByText(/Preview unavailable/)).toHaveCount(0);
+  }
+  response = Array.from({ length: 5 }, () => "```MERMAID\n" + mermaidExamples[0] + "\n```").join("\n\n");
+  await page.goto("/");
+  await page.getByRole("textbox").fill("Check the graphic budget");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("img", { name: "Mermaid diagram" })).toHaveCount(4);
+  await expect(page.getByText(/Preview limit reached/)).toHaveCount(1);
+  expect(observed.errors).toEqual([]); expect(observed.external).toEqual([]);
 });

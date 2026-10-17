@@ -27,13 +27,13 @@ export const CodeBlock = memo(function CodeBlock({ text, language, streaming, al
   text: string; language: string; streaming: boolean; allowGraphic?: boolean;
 }) {
   const graphic = language === "mermaid" || language === "vega-lite";
-  if (language === "math" && !streaming) return <MathText text={text} display />;
+  if (language === "math") return <MathText text={text} display streaming={streaming} />;
   const grammar = Object.hasOwn(Prism.languages, language) ? Prism.languages[language] : undefined;
-  const highlighted = !streaming && text.length <= MAX_CODE_CHARACTERS && grammar ? tokens(Prism.tokenize(text, grammar)) : text;
+  const highlighted = text.length <= MAX_CODE_CHARACTERS && grammar ? tokens(Prism.tokenize(text, grammar)) : text;
   return <div className="code-block">
     <div className="code-toolbar"><span>{language || "text"}</span><CopyButton text={text} label="Copy code" /></div>
-    {graphic && !streaming && allowGraphic && <Graphic source={text} kind={language} />}
-    {graphic && streaming && <p className="render-note">Preview appears when the response finishes.</p>}
+    {graphic && allowGraphic && <Graphic source={text} kind={language} streaming={streaming} />}
+    {graphic && streaming && <p className="render-note">Live preview; the response is still arriving.</p>}
     {graphic && !allowGraphic && <p className="render-note">Preview limit reached. Source is shown below.</p>}
     <pre><code className={grammar ? `language-${language}` : undefined}>{highlighted}</code></pre>
   </div>;

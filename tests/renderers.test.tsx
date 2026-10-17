@@ -10,6 +10,12 @@ import { sanitizeSvg } from "@/components/rendering/sanitize-svg";
 import { CopyButton } from "@/components/rendering/copy-button";
 import { latexAnswer } from "./fixtures/math";
 
+vi.mock("mermaid", () => ({ default: {
+  initialize: vi.fn(),
+  parse: vi.fn(async (source: string) => !source.includes("unfinished")),
+  render: vi.fn(async () => ({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>Safe preview</text></svg>' })),
+} }));
+
 afterEach(cleanup);
 
 describe("safe React content rendering", () => {
@@ -40,10 +46,10 @@ describe("safe React content rendering", () => {
     expect(container.querySelector("a,img,script,[style*=url]")).toBeNull();
     expect(container.textContent?.length).toBeLessThan(10000);
   });
-  it("keeps partial code/diagram/math streams inert until completion", () => {
+  it("keeps incomplete diagram statements readable while streaming", () => {
     const { container } = render(<RichText streaming text={'```mermaid\nflowchart LR\nA[unfinished\n\n$partial'} />);
     expect(container.querySelector("svg,.token,.katex")).toBeNull();
-    expect(screen.getByText(/Preview appears when/)).toBeTruthy();
+    expect(screen.getByText(/Live preview/)).toBeTruthy();
     expect(screen.getByText(/A\[unfinished/)).toBeTruthy();
   });
   it("contains a malformed diagram without losing surrounding conversation text", async () => {
@@ -147,11 +153,59 @@ it.each([String.raw`\(unfinished`, String.raw`\[x`, "\\(" + "x".repeat(2001) + "
   expect(container.querySelector(".plain-text")).toBeNull();
 });
 
-it("contains hostile backslash math and keeps complete streamed formulas inert", () => {
+it("contains hostile backslash math and renders complete streamed formulas", () => {
   const text = String.raw`\(\includegraphics{https://private.invalid/x}\) and \[\href{javascript:alert(1)}{go}\]`;
   const { container, rerender } = render(<RichText text={text} />);
   expect(container.querySelector("a,img,script,[style*=url]")).toBeNull();
   expect(container.querySelectorAll(".katex")).toHaveLength(2);
   rerender(<RichText text={latexAnswer} streaming />);
+  expect(container.querySelectorAll(".katex")).toHaveLength(8);
+});
+
+
+it.each(["$x^{2", String.raw`\(x^{2`, String.raw`\[\begin{pmatrix}1&2\\3&4`, "$$\n\\frac{1}{2", "```math\n\\sqrt{4"])("virtually closes streamed math without changing finalized source %#", (text) => {
+  const { container, rerender } = render(<RichText text={text} streaming />);
+  expect(container.querySelectorAll(".katex")).toHaveLength(1);
+  rerender(<RichText text={text} />);
+  if (text.startsWith("$$") || text.startsWith("```")) expect(container.querySelector(".render-fallback")).toBeTruthy();
+  else expect(container.querySelector(".katex")).toBeNull();
+});
+
+it("highlights unfinished code fences while copying the exact original code", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  const code = "const value = { nested: 1";
+  const { container } = render(<RichText text={"```javascript\n" + code} streaming />);
+  expect(container.querySelector(".token.keyword")?.textContent).toBe("const");
+  fireEvent.click(screen.getByRole("button", { name: "Copy code" }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith(code));
+});
+
+it("does not reinterpret streamed math inside code, escaped delimiters or link targets", () => {
+  const { container } = render(<RichText streaming text={'`$x^{2`\n\n```tex\n\\(x^{2\n```\n\n' + String.raw`\\(x` + '\n\n[Read](https://example.com/$x)'} />);
   expect(container.querySelector(".katex")).toBeNull();
+  expect(screen.getByRole("link").getAttribute("href")).toBe("https://example.com/$x");
+});
+
+
+it("retains the same diagram element across streamed updates and drops unsafe/final invalid previews", async () => {
+  const text = "```mermaid\nflowchart LR\nA[Safe]";
+  const { container, rerender } = render(<RichText text={text} streaming />);
+  const graphic = await screen.findByRole("img", { name: "Mermaid diagram" });
+  rerender(<RichText text={text + "\nB[unfinished\nC[unfinished\nD[unfinished\nE[unfinished"} streaming />);
+  await waitFor(() => expect(screen.getByText("Updating preview…")).toBeTruthy());
+  expect(screen.getByRole("img")).toBe(graphic);
+  rerender(<RichText text={text + '\nclick A "https://private.invalid"'} streaming />);
+  await screen.findByText(/Preview unavailable/);
+  expect(container.querySelector("svg")).toBeNull();
+  rerender(<RichText text={"```vega-lite\n{partial"} />);
+  await screen.findByText(/Preview unavailable/);
+  expect(container.querySelector("svg")).toBeNull();
+});
+
+it("keeps the four-graphic budget while streaming", async () => {
+  const text = Array.from({ length: 5 }, (_, i) => "```" + (i % 2 ? "MERMAID" : "mermaid") + "\nflowchart LR\nA[Safe]\n```").join("\n\n");
+  render(<RichText text={text} streaming />);
+  await waitFor(() => expect(screen.getAllByRole("img")).toHaveLength(4));
+  expect(screen.getByText(/Preview limit reached/)).toBeTruthy();
 });

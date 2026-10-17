@@ -15,7 +15,7 @@ export function safeLink(value: string): string | undefined {
   } catch { return undefined; }
 }
 
-export function validateMermaid(source: string): { source: string; note?: string } {
+export function assertMermaidSafety(source: string): void {
   if (!source.trim() || source.length > MAX_DIAGRAM_CHARACTERS ||
     !/^(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram-v2|erDiagram|pie)\b/.test(source.trim()) ||
     /%%\{|^\s*---|<[a-z/!]|\b(?:click|href|callback|style|classDef|linkStyle|image|icon)\b|url\s*\(|(?:https?|javascript|data|file):|@\{/im.test(source)) {
@@ -23,6 +23,10 @@ export function validateMermaid(source: string): { source: string; note?: string
   }
   const statements = source.split(/[\n;]/);
   if (statements.length > 100) throw new Error("This diagram is too large.");
+}
+
+export function validateMermaid(source: string): { source: string; note?: string } {
+  assertMermaidSafety(source);
   if (!/^pie\b/.test(source.trim())) return { source };
   return preparePie(source);
 }
