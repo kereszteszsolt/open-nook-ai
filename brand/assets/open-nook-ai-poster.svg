@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 480" role="img" aria-labelledby="title desc">
+  <title id="title">OpenNook AI project poster</title>
+  <desc id="desc">Cream and mint speech bubbles float on deep forest green. One contains bold code brackets, another a branching diagram, and a small golden bubble suggests a continuing conversation.</desc>
+  <rect width="780" height="480" rx="24" fill="#16352f"/>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="390" y="88" fill="#d7f5d8" font-size="62" font-weight="800" letter-spacing="-2">OpenNook AI</text>
+    <text x="390" y="132" fill="#c0d9ca" font-size="28" font-weight="500">Chat, code, diagrams. One conversation.</text>
+  </g>
+  <ellipse cx="390" cy="329" rx="250" ry="115" fill="#214a3e"/>
+  <g transform="rotate(9 491 270)">
+    <path d="M385 194h218a22 22 0 0 1 22 22v111a22 22 0 0 1-22 22h-20v27l-38-27H385a22 22 0 0 1-22-22V216a22 22 0 0 1 22-22Z" fill="#0c2822"/>
+    <path d="M378 185h218a22 22 0 0 1 22 22v111a22 22 0 0 1-22 22h-20v27l-38-27H378a22 22 0 0 1-22-22V207a22 22 0 0 1 22-22Z" fill="#bde7bd"/>
+    <path d="M487 251v22m-53 15v-15h106v15" fill="none" stroke="#315e49" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="456" y="212" width="62" height="41" rx="10" fill="#315e49"/>
+    <rect x="408" y="284" width="52" height="34" rx="9" fill="#f4f5de" stroke="#315e49" stroke-width="3"/>
+    <rect x="514" y="284" width="52" height="34" rx="9" fill="#f4f5de" stroke="#315e49" stroke-width="3"/>
+  </g>
+  <g transform="rotate(-10 294 343)">
+    <path d="M191 279h228a22 22 0 0 1 22 22v92a22 22 0 0 1-22 22H226l-35 27v-27a22 22 0 0 1-22-22v-92a22 22 0 0 1 22-22Z" fill="#0c2822"/>
+    <path d="M184 270h228a22 22 0 0 1 22 22v92a22 22 0 0 1-22 22H219l-35 27v-27a22 22 0 0 1-22-22v-92a22 22 0 0 1 22-22Z" fill="#fff8e8"/>
+    <path d="m246 303-36 35 36 35m104-70 36 35-36 35m-39-77-26 84" fill="none" stroke="#315e49" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="rotate(-8 575 401)">
+    <path d="M540 373h67a17 17 0 0 1 17 17v25a17 17 0 0 1-17 17h-17l-20 16v-16h-30a17 17 0 0 1-17-17v-25a17 17 0 0 1 17-17Z" fill="#f5cf78"/>
+    <g fill="#654c21"><circle cx="550" cy="403" r="5"/><circle cx="573" cy="403" r="5"/><circle cx="596" cy="403" r="5"/></g>
+  </g>
+  <path d="m220 175 8 22 22 8-22 8-8 22-8-22-22-8 22-8Z" fill="#f5cf78"/>
+  <circle cx="159" cy="230" r="6" fill="#8dba9b"/>
+  <path d="M659 312v18m-9-9h18" fill="none" stroke="#8dba9b" stroke-width="4" stroke-linecap="round"/>
+</svg>

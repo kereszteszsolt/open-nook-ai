@@ -6,6 +6,8 @@ dist/
 coverage/
 test-results/
 playwright-report/
+public/brand/
+public/license.txt
 
 # Local configuration and secrets
 .env

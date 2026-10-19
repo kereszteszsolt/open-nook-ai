@@ -112,7 +112,9 @@ cp .env.example .env
 docker compose up --build --wait
 ```
 
-Open `http://localhost:3000`; set `APP_PORT` if that port is occupied. `GET /api/health` reports readiness after a successful database query. OpenRouter settings may remain empty: the chat API is disabled without a key and configured model. Loading the chat and listing models make no provider calls. Explicit chat requests may incur charges; see the [API contract](docs/api-contract.md). See [Local development](docs/development.md) for native Next.js setup, migrations and checks.
+The Compose project is `open-nook-ai`, and both services use `restart: "no"`. Host ports bind only to `127.0.0.1`: 33040 for web and 33041 for the optional development database. Start stopped containers explicitly with Compose.
+
+Open `http://localhost:33040`; set `APP_PORT` if that port is occupied. `GET /api/health` reports readiness after a successful database query. OpenRouter settings may remain empty: the chat API is disabled without a key and configured model. Loading the chat and listing models make no provider calls. Explicit chat requests may incur charges; see the [API contract](docs/api-contract.md). See [Local development](docs/development.md) for native Next.js setup, migrations and checks.
 
 For a public deployment, **do not reuse this unauthenticated demo configuration**. Add authentication, per-user data isolation, limits and cost protection first.
 

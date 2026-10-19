@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Metadata } from "next";
+import { brand } from "@/shared/brand";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "OpenNook AI",
-  description: "A local home for thoughtful conversations with AI.",
+  title: brand.appName,
+  description: brand.appDescription,
+  icons: brand.favicon ? { icon: { url: brand.favicon, type: "image/svg+xml" } } : undefined,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

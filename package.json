@@ -9,8 +9,9 @@
   },
   "packageManager": "npm@11.19.0",
   "scripts": {
-    "predev": "node --env-file-if-exists=.env scripts/validate-env.ts && prisma generate",
+    "predev": "node scripts/prepare-brand.mjs && node --env-file-if-exists=.env scripts/validate-env.ts && prisma generate",
     "dev": "next dev --hostname 127.0.0.1",
+    "prebuild": "node scripts/prepare-brand.mjs",
     "build": "prisma generate && next build",
     "prestart": "node --env-file-if-exists=.env scripts/validate-env.ts",
     "start": "next start --hostname 127.0.0.1",
@@ -31,6 +32,7 @@
     "@openrouter/ai-sdk-provider": "3.1.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@radix-ui/react-select": "2.4.1",
     "ai": "7.0.143",
     "dompurify": "3.4.17",
     "dotenv": "18.0.8",

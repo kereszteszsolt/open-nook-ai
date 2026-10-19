@@ -1,0 +1,23 @@
+<!-- SPDX-FileCopyrightText: 2026 Keresztes Zsolt <https://kereszteszsolt.hu>
+SPDX-License-Identifier: Apache-2.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">OpenNook AI</title>
+  <desc id="desc">Cream code and mint diagram speech bubbles, with a golden spark and a continuing conversation on forest green.</desc>
+  <rect width="64" height="64" rx="16" fill="#16352f"/>
+  <ellipse cx="33" cy="39" rx="26" ry="19" fill="#214a3e"/>
+  <g transform="rotate(9 43 24)">
+    <path d="M29 12h25a5 5 0 0 1 5 5v18a5 5 0 0 1-5 5h-2v6l-8-6H29a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5Z" fill="#0c2822"/>
+    <path d="M28 10h25a5 5 0 0 1 5 5v18a5 5 0 0 1-5 5h-2v6l-8-6H28a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5Z" fill="#bde7bd"/>
+    <path d="M41 22v5m-9 3v-4h18v4" fill="none" stroke="#315e49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="36" y="15" width="10" height="8" rx="2" fill="#315e49"/>
+    <g fill="#fff8e8" stroke="#315e49" stroke-width="1.5"><rect x="28" y="29" width="9" height="6" rx="1.7"/><rect x="46" y="29" width="9" height="6" rx="1.7"/></g>
+  </g>
+  <g transform="rotate(-10 24 41)">
+    <path d="M12 29h25a5 5 0 0 1 5 5v16a5 5 0 0 1-5 5H19l-7 6v-6a5 5 0 0 1-5-5V34a5 5 0 0 1 5-5Z" fill="#0c2822"/>
+    <path d="M11 27h25a5 5 0 0 1 5 5v16a5 5 0 0 1-5 5H18l-7 6v-6a5 5 0 0 1-5-5V32a5 5 0 0 1 5-5Z" fill="#fff8e8"/>
+    <path d="m17 35-5 5 5 5m14-10 5 5-5 5m-5-12-4 14" fill="none" stroke="#315e49" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <path d="M45 47h11a4 4 0 0 1 4 4v3a4 4 0 0 1-4 4h-3l-4 3v-3h-4a4 4 0 0 1-4-4v-3a4 4 0 0 1 4-4Z" fill="#f5cf78"/>
+  <g fill="#654c21"><circle cx="46" cy="52.5" r="1.2"/><circle cx="50.5" cy="52.5" r="1.2"/><circle cx="55" cy="52.5" r="1.2"/></g>
+  <path d="m13 7 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#f5cf78"/>
+</svg>

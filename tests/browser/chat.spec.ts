@@ -60,7 +60,8 @@ test("model selection, keyboard send, rich rendering, copy, regenerate and new c
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /A space to think/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
-  await page.getByLabel("Model", { exact: true }).selectOption("test/model-two");
+  await page.getByRole("combobox", { name: "Model", exact: true }).click();
+  await page.getByRole("option", { name: "test/model-two", exact: true }).click();
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Explain something");
   await page.getByRole("textbox", { name: "Message", exact: true }).press("Shift+Enter");
   await expect(page.getByRole("textbox")).toHaveValue("Explain something\n");
@@ -78,7 +79,7 @@ test("model selection, keyboard send, rich rendering, copy, regenerate and new c
   await page.getByRole("button", { name: "Copy message", exact: true }).last().click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(rich);
   await page.reload();
-  await expect(page.getByLabel("Model", { exact: true })).toHaveValue("test/model-two");
+  await expect(page.getByRole("combobox", { name: "Model", exact: true })).toHaveText("test/model-two");
   await expect(page.locator(".assistant-message .katex")).toHaveCount(2);
   expect(calls).toHaveLength(1);
   expect(calls[0].model).toBe("test/model-two");

@@ -51,3 +51,7 @@ Comments/docstrings explain **why**, not obvious code behavior. Prefer focused t
 ## Scope and evidence
 
 Only the Release 0.1 story files define committed acceptance criteria. `docs/roadmap.md` and `docs/future.md` describe candidate later releases; **they are not implementation authorization**. Do not create later story files or new agents without a user request. Keep implementation changes within the single approved story.
+
+## Docker runtime rules
+
+Use the GitHub repository name as the Compose project: `open-nook-ai`. Publish every host port only on `127.0.0.1`, above 33000, with no port shared by another repository. The current allocation is 33040 for web and 33041 for the optional development database. Set `restart: "no"` for every service and disable dependency-triggered restarts. Preserve existing data/model volumes when changing a project name or recreating containers.

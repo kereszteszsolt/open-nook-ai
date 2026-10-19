@@ -7,9 +7,14 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
 import type { ConversationSummary, SavedConversation } from "@/shared/conversations";
 import { loadChat, loadHistory, removeChat, selectChatUrl } from "./history-client";
+import { brand } from "@/shared/brand";
+import { Attribution } from "../brand/attribution";
+import { About } from "../brand/about";
 
 type SessionProps = { initial?: SavedConversation; onSaved: () => void; onBusy: (busy: boolean) => void };
-export function History({ children }: { children: (props: SessionProps) => ReactNode }) {
+export function History({ children, modelSelector }: {
+  children: (props: SessionProps) => ReactNode; modelSelector: (busy: boolean) => ReactNode;
+}) {
   const [items, setItems] = useState<ConversationSummary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [selected, setSelected] = useState<SavedConversation>();
@@ -59,11 +64,22 @@ export function History({ children }: { children: (props: SessionProps) => React
     finally { setBusy(false); }
   };
   return <main className="workspace">
-    <div className="history-toolbar">
-      <button type="button" className="quiet-button" aria-expanded={visible} aria-controls="saved-history" onClick={() => setVisible((value) => !value)}>History</button>
-      <button type="button" className="quiet-button" disabled={busy || loading} onClick={() => { setSelected(undefined); setOpenFailed(false); setSessionKey((key) => key + 1); selectChatUrl(); setVisible(false); }}>New chat</button>
-    </div>
+    <header className="app-header history-toolbar">
+      <div className="wordmark">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {brand.icon && <img src={brand.icon} alt="" width="40" height="40" />}
+        <span>{brand.appName}</span><span className="local-badge">Local</span>
+      </div>
+      <nav className="header-actions" aria-label="Conversation controls">
+        <button type="button" className="quiet-button history-toggle" aria-expanded={visible} aria-controls="saved-history" onClick={() => setVisible((value) => !value)}>History</button>
+        <button type="button" className="quiet-button new-chat-button" disabled={busy || loading} onClick={() => { setSelected(undefined); setOpenFailed(false); setSessionKey((key) => key + 1); selectChatUrl(); setVisible(false); }}><span aria-hidden="true">＋</span> New chat</button>
+        {modelSelector(busy || loading)}
+        <About />
+      </nav>
+    </header>
+    {visible && <button type="button" className="history-backdrop" aria-label="Close history" onClick={() => setVisible(false)} />}
     <aside id="saved-history" className={`history-panel ${visible ? "history-visible" : ""}`} aria-label="Saved chats">
+      <div className="history-content">
       <h2>Saved chats</h2>
       {failed && <div role="alert"><p>History could not be loaded or changed.</p><button type="button" className="quiet-button" onClick={refresh}>Retry history</button></div>}
       {!items.length && <p className="message-state">Your conversations will appear here.</p>}
@@ -74,6 +90,8 @@ export function History({ children }: { children: (props: SessionProps) => React
       {cursor && <button type="button" className="quiet-button" disabled={busy || loading} onClick={() => {
         void loadHistory(cursor).then((result) => { setItems((previous) => [...previous, ...result.conversations.filter((item) => !previous.some((old) => old.id === item.id))]); setCursor(result.nextCursor); }).catch(() => setFailed(true));
       }}>Older chats</button>}
+      </div>
+      <Attribution />
     </aside>
     <section className="chat-shell" key={sessionKey}>{loading ? <p role="status">Loading saved chat…</p> : openFailed ? <div className="chat-error" role="alert"><p>This saved chat could not be opened. Retry or start a new chat.</p><button type="button" className="quiet-button" onClick={() => window.location.reload()}>Retry opening chat</button></div> : children({ initial: selected, onSaved: refresh, onBusy: setBusy })}</section>
   </main>;

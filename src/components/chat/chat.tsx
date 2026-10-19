@@ -15,6 +15,8 @@ import type { SavedConversation } from "@/shared/conversations";
 import { createChat, loadChat, uiMessages, selectChatUrl } from "./history-client";
 import { History } from "./history";
 import { chatPayload } from "./transport";
+import { brand } from "@/shared/brand";
+import { ModelSelect } from "./model-select";
 
 const registry = z.object({
   enabled: z.boolean(), status: z.enum(["ready", "missing_api_key", "missing_models", "invalid_configuration"]),
@@ -32,7 +34,7 @@ function Message() {
   const failed = savedStatus === "failed";
   const pending = savedStatus === "pending" && !streaming;
   return <MessagePrimitive.Root className={`message ${assistant ? "assistant-message" : "user-message"}`}>
-    <div className="message-author">{assistant ? "OpenNook" : "You"}</div>
+    <div className="message-author">{assistant ? brand.appName : "You"}</div>
     {assistant ? <RichText text={text} streaming={streaming} /> : <p className="plain-text">{text}</p>}
     {streaming && <p className="message-state" role="status">Writing…</p>}
     {incomplete && <p className="message-state">Response stopped or incomplete.</p>}
@@ -42,8 +44,8 @@ function Message() {
   </MessagePrimitive.Root>;
 }
 
-function Session({ models, model, selectModel, reloadModels, initial, onSaved, onBusy }: {
-  models: Registry; model: string; selectModel: (model: string) => void; reloadModels: () => void;
+function Session({ models, model, reloadModels, initial, onSaved, onBusy }: {
+  models: Registry; model: string; reloadModels: () => void;
   initial?: SavedConversation; onSaved: () => void; onBusy: (busy: boolean) => void;
 }) {
   const [limitError, setLimitError] = useState(false);
@@ -114,19 +116,9 @@ function Session({ models, model, selectModel, reloadModels, initial, onSaved, o
   const { stop } = chat;
   useEffect(() => { if (initial?.active) void sync.current(); }, [initial]);
   useEffect(() => () => { void stop(); }, [stop]);
+  const sessionNote = syncing || running ? "Saving…" : saveError ? "Not saved" : saved ? "Saved on this device" : null;
   return <AssistantRuntimeProvider runtime={runtime}>
-    <header className="chat-header">
-      <div className="wordmark"><span aria-hidden="true">◈</span> OpenNook AI <span className="local-badge">Local</span></div>
-
-    </header>
-    <div className="model-bar">
-      <label htmlFor="chat-model">Model</label>
-      <select id="chat-model" value={model} disabled={!enabled || busy} onChange={(event) => selectModel(event.target.value)}>
-        {!model && <option value="">No models configured</option>}
-        {models.models.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-      </select>
-      <span className="session-note">{syncing || running ? "Saving…" : saveError ? "Not saved" : saved ? "Saved on this device" : "History is saved on this device"}</span>
-    </div>
+    {sessionNote && <div className="session-status" role="status"><span className="session-note">{sessionNote}</span></div>}
     {!enabled && <div className="setup-message" role="status">
       <h2>Connect a model to begin</h2>
       <p>{models.status === "invalid_configuration" ? "Check the model and request limits in your server settings." : "Add an OpenRouter API key and at least one model in your server settings."}</p>
@@ -192,8 +184,10 @@ export function Chat() {
   }, [refresh]);
   if (failed) return <main className="connection-state"><h1>Models could not be loaded</h1><p>Check that OpenNook is running, then try again.</p><button type="button" className="primary-button" onClick={() => { setFailed(false); setRefresh((value) => value + 1); }}>Try again</button></main>;
   if (!models) return <main className="connection-state"><p role="status">Loading your models…</p></main>;
-  return <History>{({ initial, onSaved, onBusy }) => <Session models={models} model={model} selectModel={(value) => {
-    setModel(value);
-    try { sessionStorage.setItem("opennook.model", value); } catch { /* The in-memory selection still works. */ }
-  }} reloadModels={() => setRefresh((value) => value + 1)} initial={initial} onSaved={onSaved} onBusy={onBusy} />}</History>;
+  return <History modelSelector={(busy) => <ModelSelect models={models.models} value={model}
+    disabled={!models.enabled || !model || busy} onValueChange={(value) => {
+      setModel(value);
+      try { sessionStorage.setItem("opennook.model", value); } catch { /* The in-memory selection still works. */ }
+    }} />}>{({ initial, onSaved, onBusy }) => <Session models={models} model={model}
+    reloadModels={() => setRefresh((value) => value + 1)} initial={initial} onSaved={onSaved} onBusy={onBusy} />}</History>;
 }

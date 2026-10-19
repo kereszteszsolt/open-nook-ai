@@ -32,15 +32,17 @@ cp .env.example .env
 docker compose up --build --wait
 ```
 
-Open `http://localhost:3000`. If another app uses that port, set `APP_PORT` in `.env` or run `APP_PORT=3100 docker compose up --build --wait`.
+Open `http://localhost:33040`. If another app uses that port, set `APP_PORT` in `.env` or run `APP_PORT=33042 docker compose up --build --wait`.
 
 Only `web` and `db` run. The web port binds to `127.0.0.1`; the database has no published port in the base configuration. Its named volume mounts at `/var/lib/postgresql`, the PostgreSQL 18 image's persistent parent directory.
+
+The Compose project is `open-nook-ai`, matching the GitHub repository. Both services use `restart: "no"` and start only when requested. Published host ports are reserved for this repository: 33040 for web and 33041 for the optional development database. Keep overrides above 33000, unique across repositories and bound to loopback.
 
 The web entrypoint validates `DATABASE_URL`, applies committed migrations with `prisma migrate deploy`, then starts the non-root Next.js process. The initial migration establishes Prisma's migration history without application tables. The additive history migration creates Conversation/Message tables, enums, unique order/ID constraints and cascading deletes.
 
 ```bash
 docker compose ps
-curl --fail http://127.0.0.1:3000/api/health
+curl --fail http://127.0.0.1:33040/api/health
 docker compose exec web ./node_modules/.bin/prisma migrate status
 docker compose down
 ```
@@ -58,14 +60,14 @@ npm ci
 cp .env.example .env
 # Replace the password in both database settings.
 docker compose -f compose.yaml -f compose.dev.yaml up -d --wait db
-# Now change only DATABASE_URL in .env to use 127.0.0.1:5433 instead of db:5432.
+# Now change only DATABASE_URL in .env to use 127.0.0.1:33041 instead of db:5432.
 npm run db:migrate
 npm run dev
 ```
 
-The optional `compose.dev.yaml` publishes PostgreSQL only on `127.0.0.1:${DB_PORT:-5433}`. Match that port in the native `DATABASE_URL`. Native development and `npm start` bind Next.js to `127.0.0.1`; inside Compose the web process listens on its container interface while the host mapping remains local.
+The optional `compose.dev.yaml` publishes PostgreSQL only on `127.0.0.1:${DB_PORT:-33041}`. Match that port in the native `DATABASE_URL`. Native development and `npm start` bind Next.js to `127.0.0.1`; inside Compose the web process listens on its container interface while the host mapping remains local.
 
-The Compose URL uses `db:5432`; the native URL uses `127.0.0.1:5433`. Switch the URL back before starting the full Compose stack. Percent-encode special characters in URL credentials. OpenRouter settings may remain empty; models/chat then report a disabled setup state. Set a key and one or more of the five model slots only when you intend to make billable calls. Compose forwards these server settings at runtime; see [model configuration](model-configuration.md).
+The Compose URL uses `db:5432`; the native URL uses `127.0.0.1:33041`. Switch the URL back before starting the full Compose stack. Percent-encode special characters in URL credentials. OpenRouter settings may remain empty; models/chat then report a disabled setup state. Set a key and one or more of the five model slots only when you intend to make billable calls. Compose forwards these server settings at runtime; see [model configuration](model-configuration.md).
 
 ## Focused checks
 
