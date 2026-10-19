@@ -15,7 +15,7 @@ import type { SavedConversation } from "@/shared/conversations";
 import { createChat, loadChat, uiMessages, selectChatUrl } from "./history-client";
 import { History } from "./history";
 import { chatPayload } from "./transport";
-import { brand } from "@/shared/brand";
+import { appInfo } from "@/shared/app-info";
 import { ModelSelect } from "./model-select";
 
 const registry = z.object({
@@ -34,7 +34,7 @@ function Message() {
   const failed = savedStatus === "failed";
   const pending = savedStatus === "pending" && !streaming;
   return <MessagePrimitive.Root className={`message ${assistant ? "assistant-message" : "user-message"}`}>
-    <div className="message-author">{assistant ? brand.appName : "You"}</div>
+    <div className="message-author">{assistant ? appInfo.appName : "You"}</div>
     {assistant ? <RichText text={text} streaming={streaming} /> : <p className="plain-text">{text}</p>}
     {streaming && <p className="message-state" role="status">Writing…</p>}
     {incomplete && <p className="message-state">Response stopped or incomplete.</p>}

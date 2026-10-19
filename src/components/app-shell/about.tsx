@@ -5,7 +5,7 @@
 
 import { useId, useRef } from "react";
 import type { ReactNode } from "react";
-import { brand } from "@/shared/brand";
+import { appInfo } from "@/shared/app-info";
 import { Attribution } from "./attribution";
 
 function LinkIcon({ kind }: { kind: "globe" | "code" | "user" | "heart" | "coffee" }) {
@@ -32,15 +32,15 @@ function positionTooltip(link: HTMLAnchorElement) {
   tooltip.style.setProperty("--tooltip-arrow-left", `${center - left}px`);
 }
 
-function BrandLink({ href, description, children, coffee = false }: {
+function AboutLink({ href, description, children, coffee = false }: {
   href: string; description: string; children: ReactNode; coffee?: boolean;
 }) {
   const tooltipId = useId();
   if (!href) return null;
-  return <a className={`brand-link${coffee ? " coffee-link" : ""}`} href={href} target="_blank" rel="noopener noreferrer" aria-describedby={tooltipId}
+  return <a className={`about-link${coffee ? " coffee-link" : ""}`} href={href} target="_blank" rel="noopener noreferrer" aria-describedby={tooltipId}
     onPointerEnter={(event) => positionTooltip(event.currentTarget)} onFocus={(event) => positionTooltip(event.currentTarget)}>
     {children}
-    <span className="brand-tooltip" role="tooltip" id={tooltipId}>
+    <span className="link-tooltip" role="tooltip" id={tooltipId}>
       <span>{description}</span><span className="tooltip-url">{href}</span>
     </span>
   </a>;
@@ -48,7 +48,7 @@ function BrandLink({ href, description, children, coffee = false }: {
 
 export function About() {
   const dialog = useRef<HTMLDialogElement>(null);
-  const languages = brand.authorWebsiteLanguages.join(" | ");
+  const languages = appInfo.authorWebsiteLanguages.join(" | ");
   return <>
     <button type="button" className="quiet-button about-button" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
       About
@@ -60,32 +60,32 @@ export function About() {
       }
     }}>
       <div className="about-header">
-        <h2 id="about-title">About {brand.appName}</h2>
+        <h2 id="about-title">About {appInfo.appName}</h2>
         <button type="button" className="quiet-button about-close" aria-label="Close about" onClick={() => dialog.current?.close()}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
         </button>
       </div>
       <div className="about-content">
-        {/* Brand artwork is already sized SVG; no image optimization is needed. */}
+        {/* Application artwork is already sized SVG; no image optimization is needed. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {brand.poster && <img className="about-poster" src={brand.poster} alt={`${brand.appName} project poster`} width="780" height="480" />}
-        <p id="about-description" className="about-description">{brand.appDescription}</p>
+        {appInfo.poster && <img className="about-poster" src={appInfo.poster} alt={`${appInfo.appName} project poster`} width="780" height="480" />}
+        <p id="about-description" className="about-description">{appInfo.appDescription}</p>
         <nav className="about-links about-project-links" aria-label="Project and author links">
-          <BrandLink href={brand.authorWebsite} description={`About ${brand.authorName}, projects and contact. Available in ${languages}.`}><LinkIcon kind="globe"/>{brand.authorWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}</BrandLink>
-          <BrandLink href={brand.appWebsite} description={`Visit the ${brand.appName} website.`}><LinkIcon kind="globe"/>Project website</BrandLink>
-          <BrandLink href={brand.appGithubUrl} description={`Source code and releases for ${brand.appName}.`}><LinkIcon kind="code"/>Source</BrandLink>
-          <BrandLink href={brand.authorGithub} description={`Explore ${brand.authorName}'s open-source projects.`}><LinkIcon kind="user"/>GitHub profile</BrandLink>
+          <AboutLink href={appInfo.authorWebsite} description={`About ${appInfo.authorName}, projects and contact. Available in ${languages}.`}><LinkIcon kind="globe"/>{appInfo.authorWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}</AboutLink>
+          <AboutLink href={appInfo.appWebsite} description={`Visit the ${appInfo.appName} website.`}><LinkIcon kind="globe"/>Project website</AboutLink>
+          <AboutLink href={appInfo.appGithubUrl} description={`Source code and releases for ${appInfo.appName}.`}><LinkIcon kind="code"/>Source</AboutLink>
+          <AboutLink href={appInfo.authorGithub} description={`Explore ${appInfo.authorName}'s open-source projects.`}><LinkIcon kind="user"/>GitHub profile</AboutLink>
         </nav>
-        {(brand.authorWaysToSupportUrl || brand.authorBuyMeACoffeeUrl) && <>
+        {(appInfo.authorWaysToSupportUrl || appInfo.authorBuyMeACoffeeUrl) && <>
           <nav className="about-links about-support-links" aria-label="Support the author">
-            <BrandLink href={brand.authorBuyMeACoffeeUrl} description={`Support ${brand.authorName} on Buy Me a Coffee.`} coffee>
+            <AboutLink href={appInfo.authorBuyMeACoffeeUrl} description={`Support ${appInfo.authorName} on Buy Me a Coffee.`} coffee>
               <LinkIcon kind="coffee"/>Buy me a Coffee
-            </BrandLink>
-            <BrandLink href={brand.authorWaysToSupportUrl} description={`Ways to support ${brand.authorName}'s work.`}><LinkIcon kind="heart"/>Ways to support</BrandLink>
+            </AboutLink>
+            <AboutLink href={appInfo.authorWaysToSupportUrl} description={`Ways to support ${appInfo.authorName}'s work.`}><LinkIcon kind="heart"/>Ways to support</AboutLink>
           </nav>
-          {brand.supportRemarkText && <div className="support-note" role="note">
+          {appInfo.supportRemarkText && <div className="support-note" role="note">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/></svg>
-            <p>{brand.supportRemarkText}</p>
+            <p>{appInfo.supportRemarkText}</p>
           </div>}
         </>}
         <Attribution showWebsite={false} />

@@ -7,9 +7,9 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
 import type { ConversationSummary, SavedConversation } from "@/shared/conversations";
 import { loadChat, loadHistory, removeChat, selectChatUrl } from "./history-client";
-import { brand } from "@/shared/brand";
-import { Attribution } from "../brand/attribution";
-import { About } from "../brand/about";
+import { appInfo } from "@/shared/app-info";
+import { Attribution } from "../app-shell/attribution";
+import { About } from "../app-shell/about";
 
 type SessionProps = { initial?: SavedConversation; onSaved: () => void; onBusy: (busy: boolean) => void };
 export function History({ children, modelSelector }: {
@@ -67,8 +67,8 @@ export function History({ children, modelSelector }: {
     <header className="app-header history-toolbar">
       <div className="wordmark">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {brand.icon && <img src={brand.icon} alt="" width="40" height="40" />}
-        <span>{brand.appName}</span><span className="local-badge">Local</span>
+        {appInfo.icon && <img src={appInfo.icon} alt="" width="40" height="40" />}
+        <span>{appInfo.appName}</span><span className="local-badge">Local</span>
       </div>
       <nav className="header-actions" aria-label="Conversation controls">
         <button type="button" className="quiet-button history-toggle" aria-expanded={visible} aria-controls="saved-history" onClick={() => setVisible((value) => !value)}>History</button>

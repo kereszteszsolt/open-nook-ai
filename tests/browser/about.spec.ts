@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect, type Page } from "@playwright/test";
-import branding from "../../brand/branding.json" with { type: "json" };
+import appMetadata from "../../brand/branding.json" with { type: "json" };
 
-const brand = { ...branding, favicon: `/brand/${branding.appFavicon}` };
+const appInfo = { ...appMetadata, favicon: `/app-assets/${appMetadata.appFavicon}` };
 
-async function brandedPage(page: Page, count = 0, configuredModels = [{ id: "fixture/one", label: "Fixture model one" }, { id: "fixture/two", label: "Fixture model two" }]) {
+async function appPage(page: Page, count = 0, configuredModels = [{ id: "fixture/one", label: "Fixture model one" }, { id: "fixture/two", label: "Fixture model two" }]) {
   const errors: string[] = [];
   const unexpected: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -35,12 +35,12 @@ async function brandedPage(page: Page, count = 0, configuredModels = [{ id: "fix
 }
 
 test("header branding, model selection and accessible About use the app's own metadata", async ({ page }) => {
-  const observed = await brandedPage(page);
+  const observed = await appPage(page);
   const header = page.locator(".app-header");
-  await expect(header).toContainText(brand.appName);
+  await expect(header).toContainText(appInfo.appName);
   await expect.poll(() => header.locator(".wordmark img").evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
-  await expect(page).toHaveTitle(brand.appName);
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", brand.favicon);
+  await expect(page).toHaveTitle(appInfo.appName);
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", appInfo.favicon);
   await page.getByRole("combobox", { name: "Model", exact: true }).click();
   await page.getByRole("option", { name: "Fixture model two", exact: true }).click();
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Keep this unsent draft");
@@ -50,22 +50,22 @@ test("header branding, model selection and accessible About use the app's own me
   await expect(page.getByText("History is saved on this device", { exact: true })).toHaveCount(0);
   await expect(page.locator(".session-status")).toHaveCount(0);
   await about.click();
-  const dialog = page.getByRole("dialog", { name: `About ${brand.appName}` });
+  const dialog = page.getByRole("dialog", { name: `About ${appInfo.appName}` });
   await expect(dialog).toBeVisible();
-  await expect.poll(() => dialog.getByRole("img", { name: `${brand.appName} project poster` }).evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
-  await expect(dialog.locator(".about-description")).toHaveText(brand.appDescription);
-  await expect(dialog).toContainText(brand.supportRemarkText);
-  await expect(dialog.getByRole("link", { name: "Source" })).toHaveAttribute("href", brand.appGithubUrl);
-  await expect(dialog.getByRole("link", { name: "GitHub profile" })).toHaveAttribute("href", brand.authorGithub);
-  await expect(dialog.locator(".copyright-line")).toHaveText(`© ${new Date().getFullYear()} ${brand.authorName}, Apache-2.0`);
-  await page.screenshot({ path: `test-results/branding-about-${test.info().project.name}.png`, fullPage: true });
+  await expect.poll(() => dialog.getByRole("img", { name: `${appInfo.appName} project poster` }).evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  await expect(dialog.locator(".about-description")).toHaveText(appInfo.appDescription);
+  await expect(dialog).toContainText(appInfo.supportRemarkText);
+  await expect(dialog.getByRole("link", { name: "Source" })).toHaveAttribute("href", appInfo.appGithubUrl);
+  await expect(dialog.getByRole("link", { name: "GitHub profile" })).toHaveAttribute("href", appInfo.authorGithub);
+  await expect(dialog.locator(".copyright-line")).toHaveText(`© ${new Date().getFullYear()} ${appInfo.authorName}, Apache-2.0`);
+  await page.screenshot({ path: `test-results/about-${test.info().project.name}.png`, fullPage: true });
   const website = dialog.getByRole("link", { name: "kereszteszsolt.hu" });
   await website.focus();
   await expect(website.getByRole("tooltip")).toContainText("hu | en | ro | de");
-  await expect(website.getByRole("tooltip")).toContainText(brand.authorWebsite);
+  await expect(website.getByRole("tooltip")).toContainText(appInfo.authorWebsite);
   const support = dialog.getByRole("link", { name: "Ways to support" });
   await support.focus();
-  await expect(support.getByRole("tooltip")).toContainText(brand.authorWaysToSupportUrl);
+  await expect(support.getByRole("tooltip")).toContainText(appInfo.authorWaysToSupportUrl);
   const tooltip = await support.getByRole("tooltip").boundingBox();
   expect(tooltip!.x).toBeGreaterThanOrEqual(0);
   expect(tooltip!.x + tooltip!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
@@ -89,13 +89,13 @@ test("header branding, model selection and accessible About use the app's own me
 });
 
 test("sidebar attribution stays visible below a scrolling conversation history", async ({ page }) => {
-  const observed = await brandedPage(page, 20);
+  const observed = await appPage(page, 20);
   if (page.viewportSize()!.width <= 800) await page.getByRole("button", { name: "History", exact: true }).click();
   const sidebar = page.getByRole("complementary", { name: "Saved chats" });
   const footer = sidebar.locator("footer");
-  await expect(footer.locator(".copyright-line")).toHaveText(`© ${new Date().getFullYear()} ${brand.authorName}, Apache-2.0`);
+  await expect(footer.locator(".copyright-line")).toHaveText(`© ${new Date().getFullYear()} ${appInfo.authorName}, Apache-2.0`);
   await expect(footer.getByRole("link", { name: "Apache-2.0" })).toHaveAttribute("href", "/license.txt");
-  await expect(footer.getByRole("link", { name: "kereszteszsolt.hu" })).toHaveAttribute("href", brand.authorWebsite);
+  await expect(footer.getByRole("link", { name: "kereszteszsolt.hu" })).toHaveAttribute("href", appInfo.authorWebsite);
   const copyright = await footer.locator(".copyright-line").boundingBox();
   const website = await footer.getByRole("link", { name: "kereszteszsolt.hu" }).boundingBox();
   expect(website!.y).toBeGreaterThanOrEqual(copyright!.y + copyright!.height);
@@ -104,35 +104,35 @@ test("sidebar attribution stays visible below a scrolling conversation history",
   expect(await sidebar.locator(".history-content").evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
   await sidebar.locator(".history-content").evaluate((element) => { element.scrollTop = element.scrollHeight; });
   await expect(footer).toBeInViewport();
-  await page.screenshot({ path: `test-results/branding-history-${test.info().project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/history-${test.info().project.name}.png`, fullPage: true });
   expect(observed.errors).toEqual([]);
   expect(observed.unexpected).toEqual([]);
 });
 
 test("320px layout keeps header controls, About and support tooltips inside the viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
-  const observed = await brandedPage(page);
+  const observed = await appPage(page);
   await expect(page.getByLabel("Model", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "New chat", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-  await page.screenshot({ path: `test-results/branding-header-320-${test.info().project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/header-320-${test.info().project.name}.png`, fullPage: true });
   await page.getByRole("button", { name: "About", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("link", { name: "Buy me a Coffee" }).focus();
-  const tooltip = dialog.getByRole("tooltip").filter({ hasText: brand.authorBuyMeACoffeeUrl });
+  const tooltip = dialog.getByRole("tooltip").filter({ hasText: appInfo.authorBuyMeACoffeeUrl });
   await expect(tooltip).toBeVisible();
   const bounds = await tooltip.boundingBox();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
   expect(await dialog.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(false);
-  await page.screenshot({ path: `test-results/branding-about-320-${test.info().project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/about-320-${test.info().project.name}.png`, fullPage: true });
   await page.keyboard.press("Escape");
   expect(observed.errors).toEqual([]);
   expect(observed.unexpected).toEqual([]);
 });
 
 test("model menu supports keyboard selection, cancellation and outside dismissal", async ({ page }) => {
-  const observed = await brandedPage(page);
+  const observed = await appPage(page);
   const model = page.getByRole("combobox", { name: "Model", exact: true });
   await model.focus();
   await model.press("ArrowDown");
@@ -147,6 +147,7 @@ test("model menu supports keyboard selection, cancellation and outside dismissal
   await model.press("Enter");
   await expect(page.getByRole("option", { name: "Fixture model one", exact: true })).toBeFocused();
   await page.keyboard.press("End");
+  await expect(page.getByRole("option", { name: "Fixture model two", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(model).toHaveText("Fixture model two");
   await expect(page.getByRole("listbox")).toHaveCount(0);
@@ -167,7 +168,7 @@ test("compact model control and its aligned menu contain long names at every hea
     const id = `provider-${index}/` + "long-reasoning-model-with-extended-context-".repeat(4);
     return { id, label: id };
   });
-  const observed = await brandedPage(page, 0, configured);
+  const observed = await appPage(page, 0, configured);
   const model = page.getByRole("combobox", { name: "Model", exact: true });
   for (const width of [1280, 820, 768, 640, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });

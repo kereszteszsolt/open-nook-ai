@@ -6,10 +6,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const branding = JSON.parse(await readFile(path.join(root, "brand/branding.json"), "utf8"));
-for (const asset of new Set([branding.appIcon, branding.appFavicon, branding.appPoster].filter(Boolean))) {
+const appMetadata = JSON.parse(await readFile(path.join(root, "brand/branding.json"), "utf8"));
+for (const asset of new Set([appMetadata.appIcon, appMetadata.appFavicon, appMetadata.appPoster].filter(Boolean))) {
   if (!/^assets\/[a-zA-Z0-9_-]+\.(svg|png|ico)$/.test(asset)) throw new Error("Brand artwork must be a local file inside brand/assets.");
-  const destination = path.join(root, "public/brand", asset);
+  const destination = path.join(root, "public/app-assets", asset);
   await mkdir(path.dirname(destination), { recursive: true });
   await copyFile(path.join(root, "brand", asset), destination);
 }
